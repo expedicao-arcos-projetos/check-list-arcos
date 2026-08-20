@@ -540,7 +540,7 @@ function adicionarCSSValidacao() {
 adicionarCSSValidacao();
 
 // Exportar classe
-const formValidator = FormValidator;
+window.FormValidator = FormValidator;
 
 // Exemplo de uso:
 /*
