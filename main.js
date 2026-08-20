@@ -1,60 +1,10 @@
 // ============================================
-// MAIN.JS V3 - COM VALIDAÇÃO AVANÇADA
-// FEEDBACK VISUAL LIMPO (SEM ALERTS)
+// CONFIGURAÇÃO INICIAL E CONSTANTES
 // ============================================
-
-/**
- * Versão melhorada com:
- * - Validação avançada com feedback inline
- * - Sem alerts (popup)
- * - Mensagens de erro limpas e profissionais
- * - Validação em tempo real
- * - Indicadores visuais (cores, ícones)
- */
-if (typeof auth === 'undefined') {
-  window.auth = {
-    estaAutenticado: () => false,
-    login: async (cpf) => ({ nome: 'Motorista' }),
-    logout: () => {},
-    obterCPFAtual: () => '00000000000',
-    fazerRequisicaoSegura: async (url, options) => ({
-      ok: true,
-      json: async () => ({ existe: false, sucesso: true, id_inspecao: 'INSP-' + Date.now() })
-    })
-  };
-}
-
-if (typeof logger === 'undefined') {
-  window.logger = {
-    registrarAcao: console.log,
-    registrarLogin: console.log,
-    registrarLogout: console.log,
-    registrarErro: console.error,
-    registrarValidacaoFalhada: console.warn,
-    registrarInspecao: console.log
-  };
-}
-
-if (typeof notificacao === 'undefined') {
-  window.notificacao = {
-    sucesso: (t, m) => alert(`${t}: ${m}`),
-    erro: (t, m) => alert(`${t}: ${m}`),
-    aviso: (t, m) => alert(`${t}: ${m}`),
-    carregando: () => ({ remove: () => {} }),
-    modal: async (t, m) => true
-  };
-}
-
-if (typeof offlineSync === 'undefined') {
-  window.offlineSync = {
-    salvarRascunhoInspecao: async () => 'OFFLINE-123',
-    sincronizarOperacoes: () => {}
-  };
-}
-
 
 const WORKER_URL = 'https://sistema-inspecoes.samuelvivi1996.workers.dev';
 
+// GABARITO DA PROVA (4 QUESTÕES)
 const GABARITO = {
   q1: 'Borracha',
   q2: 'Todos os dias',
@@ -62,120 +12,124 @@ const GABARITO = {
   q4: 'Bloqueada pelo responsável CSN CIMENTOS.'
 };
 
-let validadorCPF = null;
-let validadorIntegracao = null;
-let validadorInspecaoFOB = null;
-let validadorInspecaoCIF = null;
-
+let cpfAtual = '';
 let dadosMotoristaAtual = {};
 let ultimaInspecaoAtual = null;
 let ehPrimeiraVez = false;
 let tipoCarregamentoSelecionado = '';
 
-const id = (el) => document.getElementById(el);
-
 // ============================================
-// INICIALIZAÇÃO
+// FUNÇÕES DE FEEDBACK VISUAL INLINE (SEM ALERT)
 // ============================================
 
-document.addEventListener('DOMContentLoaded', () => {
-  inicializarValidadores();
-  
-  if (!auth.estaAutenticado()) {
-    irParaCPF();
-  } else {
-    irParaSelecaoCarregamento();
-  }
+function id(el) {
+  return document.getElementById(el);
+}
 
-  logger.registrarAcao('pagina_carregada', 'Sistema carregado');
-});
+function mostrarErroInline(elementId, mensagem) {
+  const elemento = id(elementId);
+  if (!elemento) return;
 
-/**
- * Inicializar todos os validadores de formulário
- */
+  const container = elemento.closest('.input-group') || elemento.parentElement;
+  removerErroInline(elementId);
 
-function inicializarValidadores() {
-  // Use FormValidator com F maiúsculo:
-  validadorCPF = new FormValidator('form-cpf-busca');
-  validadorCPF.adicionarRegra('input-cpf', 'cpf', 'CPF inválido');
+  container.classList.add('has-error');
 
-  validadorIntegracao = new FormValidator('form-prova');
-  validadorIntegracao
-    .adicionarRegra('reg-nome', 'obrigatorio', 'Nome completo é obrigatório')
-    .adicionarRegra('reg-nome', 'minimo', 'Mínimo 3 caracteres', { min: 3 })
-    .adicionarRegra('reg-rg', 'rg', 'RG inválido')
-    .adicionarRegra('reg-telefone', 'telefone', 'Telefone com DDD inválido')
-    .adicionarRegra('reg-placa', 'placa', 'Placa inválida');
+  const feedback = document.createElement('div');
+  feedback.className = 'form-feedback error';
+  feedback.innerHTML = `<span>✕</span><span>${mensagem}</span>`;
+  container.appendChild(feedback);
 
-  validadorInspecaoFOB = new FormValidator('form-inspecao');
-  validadorInspecaoFOB
-    .adicionarRegra('nome', 'obrigatorio', 'Nome é obrigatório')
-    .adicionarRegra('cnh', 'cnh', 'CNH inválida')
-    .adicionarRegra('telefone', 'telefone', 'Telefone inválido')
-    .adicionarRegra('placa', 'placa', 'Placa inválida')
-    .adicionarRegra('pedido', 'pedido', 'Número de pedido inválido')
-    .adicionarRegra('eixos', 'eixos', 'Quantidade de eixos inválida (1-9)');
+  elemento.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  elemento.focus();
+}
 
-  validadorInspecaoCIF = new FormValidator('form-inspecao-cif');
-  validadorInspecaoCIF
-    .adicionarRegra('cif-nome', 'obrigatorio', 'Nome é obrigatório')
-    .adicionarRegra('cif-cnh', 'cnh', 'CNH inválida')
-    .adicionarRegra('cif-telefone', 'telefone', 'Telefone inválido')
-    .adicionarRegra('cif-placa', 'placa', 'Placa inválida')
-    .adicionarRegra('cif-pedido', 'pedido', 'Número de pedido inválido')
-    .adicionarRegra('cif-eixos', 'eixos', 'Quantidade de eixos inválida (1-9)');
+function removerErroInline(elementId) {
+  const elemento = id(elementId);
+  if (!elemento) return;
+
+  const container = elemento.closest('.input-group') || elemento.parentElement;
+  container.classList.remove('has-error');
+
+  const feedbackAntigo = container.querySelector('.form-feedback');
+  if (feedbackAntigo) feedbackAntigo.remove();
+}
+
+function limparTodosErros() {
+  document.querySelectorAll('.input-group').forEach(group => {
+    group.classList.remove('has-error');
+    const feedback = group.querySelector('.form-feedback');
+    if (feedback) feedback.remove();
+  });
+}
+
+// Listeners para limpar erro assim que o usuário digita/muda o campo
+document.addEventListener('input', (e) => { if (e.target.id) removerErroInline(e.target.id); });
+document.addEventListener('change', (e) => { if (e.target.id) removerErroInline(e.target.id); });
+
+// ============================================
+// VALIDAÇÕES
+// ============================================
+
+function validarPlaca(placa) {
+  const regexPlaca = /^[A-Z]{3}[0-9]{1}[A-Z0-9]{1}[0-9]{2}$/;
+  return regexPlaca.test(placa);
+}
+
+function validarPedido(pedido) {
+  const regexPedido = /^[0-9]{7,9}$/;
+  return regexPedido.test(pedido);
+}
+
+function validarTelefone(telefone) {
+  const regexTelefone = /^[1-9]{2}(?:[2-8][0-9]{7}|9[0-9]{8})$/;
+  return regexTelefone.test(telefone);
+}
+
+function validarEixos(eixos) {
+  const regexEixos = /^[1-9]{1}$/;
+  return regexEixos.test(eixos);
 }
 
 // ============================================
-// ETAPA 1: VERIFICAR CPF E LOGIN
+// ETAPA 1: VERIFICAR CPF E TIPO DE CARREGAMENTO
 // ============================================
 
 async function verificarAcesso() {
+  limparTodosErros();
   const inputCPF = id('input-cpf');
-  
-  // Validar CPF
-  if (!validadorCPF.validarCampo('input-cpf')) {
+  const cpf = inputCPF.value.trim();
+
+  if (cpf.length !== 11 || isNaN(cpf)) {
+    mostrarErroInline('input-cpf', 'CPF inválido! Digite 11 números.');
     return;
   }
 
-  const cpf = inputCPF.value.trim();
+  cpfAtual = cpf;
 
   try {
-    validadorCPF.desabilitarDurante(true);
-    const toastCarregando = notificacao.carregando('Verificando acesso...');
-
-    // Fazer login
-    const resultadoLogin = await auth.login(cpf);
-    
-    toastCarregando.remove();
-    logger.registrarLogin(cpf);
-    notificacao.sucesso('Bem-vindo!', `Olá, ${resultadoLogin.nome || 'Motorista'}!`);
-
-    // Verificar se é primeira vez
-    const response = await auth.fazerRequisicaoSegura(`${WORKER_URL}/api/verificar-cpf`, {
+    const response = await fetch(`${WORKER_URL}/api/verificar-cpf`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cpf })
     });
 
     const resultado = await response.json();
 
-    ehPrimeiraVez = !resultado.existe;
-    dadosMotoristaAtual = resultado.dados || {};
-    ultimaInspecaoAtual = resultado.ultima_inspecao || null;
-
-    if (ehPrimeiraVez) {
-      logger.registrarAcao('primeiro_acesso', `Primeiro acesso do CPF ${cpf}`);
-      irParaIntegracao();
-    } else {
-      logger.registrarAcao('acesso_repetido', `Acesso repetido do CPF ${cpf}`);
+    if (resultado.existe) {
+      ehPrimeiraVez = false;
+      dadosMotoristaAtual = resultado.dados || {};
+      ultimaInspecaoAtual = resultado.ultima_inspecao || null;
       irParaSelecaoCarregamento();
+    } else {
+      ehPrimeiraVez = true;
+      dadosMotoristaAtual = {};
+      ultimaInspecaoAtual = null;
+      irParaIntegracao();
     }
-
   } catch (erro) {
-    notificacao.erro('Erro de Autenticação', erro.message || 'Falha ao fazer login');
-    logger.registrarErro('verificarAcesso', erro.stack);
-  } finally {
-    validadorCPF.desabilitarDurante(false);
+    console.error('Erro ao verificar CPF:', erro);
+    mostrarErroInline('input-cpf', 'Erro ao conectar com o servidor. Verifique a conexão.');
   }
 }
 
@@ -188,8 +142,8 @@ function confirmarTipoCarregamento() {
   const opcao = document.querySelector('input[name="modelo_carregamento"]:checked')?.value;
 
   if (!opcao) {
-    notificacao.aviso('Seleção Obrigatória', 'Por favor, selecione o Tipo de Carregamento (FOB ou TRANSFERÊNCIA/CIF)!');
-    logger.registrarValidacaoFalhada('tipo_carregamento', '', 'Não selecionado');
+    const elementoFob = document.querySelector('input[name="modelo_carregamento"]');
+    mostrarErroInline(elementoFob ? elementoFob.id || 'step-tipo-carregamento' : 'step-tipo-carregamento', 'Selecione o Tipo de Carregamento (FOB ou TRANSFERÊNCIA/CIF)!');
     return;
   }
 
@@ -203,7 +157,63 @@ function confirmarTipoCarregamento() {
 }
 
 // ============================================
-// ETAPA 2: INTEGRAÇÃO & PROVA
+// AUTO-PREENCHIMENTO DO ÚLTIMO CARREGAMENTO
+// ============================================
+
+function preencherUltimoCarregamento() {
+  if (!ultimaInspecaoAtual) return;
+
+  const dados = ultimaInspecaoAtual;
+
+  if (id('nome') && dados.nome) id('nome').value = dados.nome;
+  if (id('cnh') && dados.cnh) id('cnh').value = dados.cnh;
+  if (id('telefone') && dados.telefone) id('telefone').value = dados.telefone;
+  if (id('placa') && dados.placa) id('placa').value = dados.placa;
+  if (id('eixos') && dados.eixos) id('eixos').value = dados.eixos;
+  if (id('pedido')) id('pedido').value = '';
+
+  if (dados.tipo_veiculo) {
+    const radioTipo = document.querySelector(`input[name="tipo_veiculo"][value="${dados.tipo_veiculo}"]`);
+    if (radioTipo) {
+      radioTipo.checked = true;
+      atualizarCamposPorTipoVeiculo();
+    }
+  }
+
+  if (id('sinalizacao') && dados.sinalizacao) id('sinalizacao').value = dados.sinalizacao;
+  if (id('pneus') && dados.pneus) id('pneus').value = dados.pneus;
+  if (id('carroceria') && dados.carroceria) id('carroceria').value = dados.carroceria;
+  if (id('cinto') && dados.cinto) id('cinto').value = dados.cinto;
+  if (id('farois') && dados.farois) id('farois').value = dados.farois;
+  if (id('alarme_re') && dados.alarme_re) id('alarme_re').value = dados.alarme_re;
+  if (id('vazamentos') && dados.vazamentos) id('vazamentos').value = dados.vazamentos;
+  if (id('calcos') && dados.calcos) id('calcos').value = dados.calcos;
+  if (id('tampa_silo') && dados.tampa_silo) id('tampa_silo').value = dados.tampa_silo;
+
+  if (id('epi_capacete') && dados.epi_capacete) id('epi_capacete').value = dados.epi_capacete;
+  if (id('epi_colete') && dados.epi_colete) id('epi_colete').value = dados.epi_colete;
+  if (id('epi_oculos') && dados.epi_oculos) id('epi_oculos').value = dados.epi_oculos;
+  if (id('epi_botina') && dados.epi_botina) id('epi_botina').value = dados.epi_botina;
+  if (id('epi_luvas') && dados.epi_luvas) id('epi_luvas').value = dados.epi_luvas;
+
+  if (dados.paletes_opcao) {
+    const radioPalete = document.querySelector(`input[name="paletes_opcao"][value="${dados.paletes_opcao}"]`);
+    if (radioPalete) {
+      radioPalete.checked = true;
+      if (dados.paletes_opcao === 'SIM') {
+        mostrarQuantidadePaletes();
+        if (id('quantidade-paletes') && dados.paletes_quantidade) {
+          id('quantidade-paletes').value = dados.paletes_quantidade;
+        }
+      } else {
+        ocultarQuantidadePaletes();
+      }
+    }
+  }
+}
+
+// ============================================
+// PROVA & INTEGRAÇÃO
 // ============================================
 
 function alternarBloqueioProva() {
@@ -225,36 +235,25 @@ function alternarBloqueioProva() {
 }
 
 async function concluirIntegracao() {
+  limparTodosErros();
+
   const nome = id('reg-nome').value.trim();
   const rg = id('reg-rg').value.trim();
   const telefone = id('reg-telefone').value.trim();
-  const placa = id('reg-placa').value.trim().toUpperCase();
+  let placa = id('reg-placa').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
 
-  // Validar campos
-  if (!validadorIntegracao.validarFormulario()) {
-    validadorIntegracao.mostrarResumoErros();
-    return;
-  }
-
-  // Verificar aceites
   const aceiteVideo = id('aceite-video').checked;
   const aceitePPAE = id('aceite-ppae').checked;
   const aceiteFOB = id('aceite-fob').checked;
   const aceiteLGPD = id('aceite-lgpd')?.checked;
 
-  if (!aceiteVideo) {
-    notificacao.aviso('Aceite Obrigatório', 'Confirme que assistiu ao VÍDEO DE INTRODUÇÃO!');
-    logger.registrarValidacaoFalhada('aceite_video', '', 'Não confirmado');
-    return;
-  }
+  if (!nome) return mostrarErroInline('reg-nome', 'Informe seu nome completo');
+  if (!rg) return mostrarErroInline('reg-rg', 'Informe seu RG');
+  if (!telefone || !validarTelefone(telefone)) return mostrarErroInline('reg-telefone', 'Telefone/WhatsApp inválido (com DDD)');
+  if (!placa || !validarPlaca(placa)) return mostrarErroInline('reg-placa', 'Placa inválida');
 
-  if (!aceitePPAE || !aceiteFOB || !aceiteLGPD) {
-    notificacao.aviso('Aceites Obrigatórios', 'Marque o aceite em TODOS os termos de compromisso!');
-    logger.registrarValidacaoFalhada('aceites', '', 'Não marcados');
-    return;
-  }
+  if (!aceiteVideo) return mostrarErroInline('aceite-video', 'Confirme que assistiu ao VÍDEO DE INTRODUÇÃO');
 
-  // Verificar prova
   const respostas = {
     q1: document.querySelector('input[name="q1"]:checked')?.value,
     q2: document.querySelector('input[name="q2"]:checked')?.value,
@@ -262,97 +261,61 @@ async function concluirIntegracao() {
     q4: document.querySelector('input[name="q4"]:checked')?.value
   };
 
-  if (!respostas.q1 || !respostas.q2 || !respostas.q3 || !respostas.q4) {
-    notificacao.aviso('Prova Incompleta', 'Responda todas as 4 questões!');
-    logger.registrarValidacaoFalhada('prova', '', 'Questões não respondidas');
-    return;
-  }
+  if (!respostas.q1) return mostrarErroInline('q1-a', 'Responda à questão 1');
+  if (!respostas.q2) return mostrarErroInline('q2-a', 'Responda à questão 2');
+  if (!respostas.q3) return mostrarErroInline('q3-a', 'Responda à questão 3');
+  if (!respostas.q4) return mostrarErroInline('q4-a', 'Responda à questão 4');
 
-  // Avaliar prova
+  if (!aceitePPAE) return mostrarErroInline('aceite-ppae', 'Aceite o Termo do PPAE');
+  if (!aceiteFOB) return mostrarErroInline('aceite-fob', 'Aceite o Termo de Compromisso');
+  if (!aceiteLGPD) return mostrarErroInline('aceite-lgpd', 'Aceite a Política de Privacidade (LGPD)');
+
   let acertos = 0;
-  let detalhes = [];
-
   for (let questao in GABARITO) {
-    if (respostas[questao] === GABARITO[questao]) {
-      acertos++;
-      detalhes.push(`✅ Q${questao.replace('q', '')}`);
-    } else {
-      detalhes.push(`❌ Q${questao.replace('q', '')}`);
-    }
+    if (respostas[questao] === GABARITO[questao]) acertos++;
   }
 
-  if (acertos < 4) {
-    notificacao.erro(
-      'Prova Reprovada',
-      `Você acertou ${acertos}/4 questões.<br/>Precisa acertar TODAS as questões!<br/><br/>${detalhes.join('<br/>')}`
-    );
-    logger.registrarAcao('prova_reprovada', `Motorista errou ${4 - acertos} questões`, { detalhes });
-    return;
-  }
-
-  // Prova aprovada - mostrar modal
-  const confirmado = await notificacao.modal(
-    'Parabéns! 🎉',
-    `Você foi aprovado!<br/><br/>${detalhes.join('<br/>')}`,
-    [{ label: 'Continuar', tipo: 'primary', valor: true }],
-    'success'
-  );
-
-  if (!confirmado) return;
-
-  try {
-    validadorIntegracao.desabilitarDurante(true);
-    const toastCarregando = notificacao.carregando('Salvando dados...');
-
-    // Salvar motorista
+  if (acertos === 4) {
     await salvarMotoristaComProva(nome, rg, telefone, placa, respostas);
+    dadosMotoristaAtual = { nome, rg, telefone, placa };
 
-    toastCarregando.remove();
-
-    logger.registrarAcao('integracao_completa', 'Motorista integrado com sucesso', { nome });
-    notificacao.sucesso('Integração Concluída!', 'Dados salvos com sucesso!');
+    if (id('nome')) id('nome').value = nome;
+    if (id('placa')) id('placa').value = placa;
+    if (id('telefone')) id('telefone').value = telefone;
 
     irParaSelecaoCarregamento();
-
-  } catch (erro) {
-    notificacao.erro('Erro ao Salvar', 'Falha ao salvar dados de integração');
-    logger.registrarErro('concluirIntegracao', erro.stack);
-  } finally {
-    validadorIntegracao.desabilitarDurante(false);
+  } else {
+    mostrarErroInline('secao-prova', `Você acertou ${acertos}/4 questões. Precisa acertar TODAS as questões para avançar!`);
   }
 }
 
 async function salvarMotoristaComProva(nome, rg, telefone, placa, respostas) {
-  const cpf = auth.obterCPFAtual();
+  const aceiteVideo = id('aceite-video').checked;
 
-  const response = await auth.fazerRequisicaoSegura(`${WORKER_URL}/api/salvar-motorista`, {
-    method: 'POST',
-    body: JSON.stringify({
-      cpf,
-      nome,
-      rg,
-      telefone,
-      placa,
-      aceite_video: true,
-      aceite_ppae: true,
-      aceite_fob: true,
-      aceite_lgpd: true,
-      data_aceite: new Date().toISOString(),
-      prova_respondida: {
-        data: new Date().toISOString(),
-        respostas,
-        resultado: 'aprovado'
-      }
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error('Falha ao salvar motorista');
+  try {
+    await fetch(`${WORKER_URL}/api/salvar-motorista`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cpf: cpfAtual,
+        nome, rg, telefone, placa,
+        aceite_video: aceiteVideo,
+        aceite_ppae: true, aceite_fob: true, aceite_lgpd: true,
+        data_aceite: new Date().toISOString(),
+        prova_respondida: {
+          data: new Date().toISOString(),
+          respostas,
+          resultado: 'aprovado'
+        }
+      })
+    });
+  } catch (erro) {
+    console.error('Erro ao salvar motorista:', erro);
   }
 }
 
 // ============================================
-// CONTROLE DE PALETES
+// CONTROLE DE TIPO DE VEÍCULO E PALETES
 // ============================================
 
 function mostrarQuantidadePaletes() {
@@ -368,10 +331,6 @@ function ocultarQuantidadePaletes() {
   if (inputQtd) inputQtd.value = '';
 }
 
-// ============================================
-// ETAPA 3A: INSPEÇÃO FOB
-// ============================================
-
 function atualizarCamposPorTipoVeiculo() {
   const tipoVeiculo = document.querySelector('input[name="tipo_veiculo"]:checked')?.value;
   const containerTampaSilo = id('container-tampa-silo');
@@ -381,11 +340,17 @@ function atualizarCamposPorTipoVeiculo() {
 
   if (tipoVeiculo === 'CARGA_SECA') {
     if (containerTampaSilo) containerTampaSilo.style.display = 'none';
-    if (selectTampaSilo) selectTampaSilo.value = '';
+    if (selectTampaSilo) {
+      selectTampaSilo.value = 'NA';
+      selectTampaSilo.removeAttribute('required');
+    }
     if (secaoPaletes) secaoPaletes.style.display = 'block';
   } else if (tipoVeiculo === 'CARRETA_SILO') {
     if (containerTampaSilo) containerTampaSilo.style.display = 'flex';
-    if (selectTampaSilo) selectTampaSilo.value = '';
+    if (selectTampaSilo) {
+      selectTampaSilo.value = '';
+      selectTampaSilo.setAttribute('required', 'required');
+    }
     if (secaoPaletes) secaoPaletes.style.display = 'none';
     radiosPaletes.forEach(radio => radio.checked = false);
     ocultarQuantidadePaletes();
@@ -398,105 +363,40 @@ document.addEventListener('change', function(e) {
   }
 });
 
-function preencherUltimoCarregamento() {
-  if (!ultimaInspecaoAtual) return;
-
-  const dados = ultimaInspecaoAtual;
-
-  // Dados básicos
-  if (id('nome') && dados.nome) id('nome').value = dados.nome;
-  if (id('cnh') && dados.cnh) id('cnh').value = dados.cnh;
-  if (id('telefone') && dados.telefone) id('telefone').value = dados.telefone;
-  if (id('placa') && dados.placa) id('placa').value = dados.placa;
-  if (id('eixos') && dados.eixos) id('eixos').value = dados.eixos;
-  if (id('pedido')) id('pedido').value = '';
-
-  // Tipo de veículo
-  if (dados.tipo_veiculo) {
-    const radioTipo = document.querySelector(`input[name="tipo_veiculo"][value="${dados.tipo_veiculo}"]`);
-    if (radioTipo) {
-      radioTipo.checked = true;
-      atualizarCamposPorTipoVeiculo();
-    }
-  }
-
-  // Itens de inspeção
-  if (id('sinalizacao') && dados.sinalizacao) id('sinalizacao').value = dados.sinalizacao;
-  if (id('pneus') && dados.pneus) id('pneus').value = dados.pneus;
-  if (id('carroceria') && dados.carroceria) id('carroceria').value = dados.carroceria;
-  if (id('cinto') && dados.cinto) id('cinto').value = dados.cinto;
-  if (id('farois') && dados.farois) id('farois').value = dados.farois;
-  if (id('alarme_re') && dados.alarme_re) id('alarme_re').value = dados.alarme_re;
-  if (id('vazamentos') && dados.vazamentos) id('vazamentos').value = dados.vazamentos;
-  if (id('calcos') && dados.calcos) id('calcos').value = dados.calcos;
-  if (id('tampa_silo') && dados.tampa_silo) id('tampa_silo').value = dados.tampa_silo;
-
-  // EPIs
-  if (id('epi_capacete') && dados.epi_capacete) id('epi_capacete').value = dados.epi_capacete;
-  if (id('epi_colete') && dados.epi_colete) id('epi_colete').value = dados.epi_colete;
-  if (id('epi_oculos') && dados.epi_oculos) id('epi_oculos').value = dados.epi_oculos;
-  if (id('epi_botina') && dados.epi_botina) id('epi_botina').value = dados.epi_botina;
-  if (id('epi_luvas') && dados.epi_luvas) id('epi_luvas').value = dados.epi_luvas;
-
-  // Paletes
-  if (dados.paletes_opcao) {
-    const radioPalete = document.querySelector(`input[name="paletes_opcao"][value="${dados.paletes_opcao}"]`);
-    if (radioPalete) {
-      radioPalete.checked = true;
-      if (dados.paletes_opcao === 'SIM') {
-        mostrarQuantidadePaletes();
-        if (id('quantidade-paletes') && dados.paletes_quantidade) {
-          id('quantidade-paletes').value = dados.paletes_quantidade;
-        }
-      } else {
-        ocultarQuantidadePaletes();
-      }
-    }
-  }
-}
+// ============================================
+// ETAPA 3A: INSPEÇÃO FOB
+// ============================================
 
 async function gerarJSONeToken() {
-  const cpf = auth.obterCPFAtual();
-  
+  limparTodosErros();
+
   let placaDigitada = id('placa').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
   let pedidoDigitado = id('pedido').value.trim();
   let eixosDigitados = id('eixos').value.trim();
   let telefoneDigitado = id('telefone').value.trim();
-
   const tipoVeiculo = document.querySelector('input[name="tipo_veiculo"]:checked')?.value;
 
-  if (!tipoVeiculo) {
-    notificacao.aviso('Tipo de Veículo', 'Por favor, selecione qual é o seu tipo de veículo!');
-    logger.registrarValidacaoFalhada('tipo_veiculo', '', 'Não selecionado');
-    return;
+  if (!id('nome').value.trim()) return mostrarErroInline('nome', 'Informe o seu nome completo');
+  if (!id('cnh').value.trim()) return mostrarErroInline('cnh', 'Informe o número da CNH');
+  if (!validarTelefone(telefoneDigitado)) return mostrarErroInline('telefone', 'Telefone/WhatsApp inválido (com DDD)');
+  if (!validarPlaca(placaDigitada)) return mostrarErroInline('placa', 'Placa do veículo inválida');
+  if (!validarPedido(pedidoDigitado)) return mostrarErroInline('pedido', 'Número de Pedido inválido');
+  if (!validarEixos(eixosDigitados)) return mostrarErroInline('eixos', 'Quantidade de eixos inválida');
+  if (!tipoVeiculo) return mostrarErroInline('step-inspecao', 'Selecione o tipo do veículo');
+
+  // Campos de inspeção básicos
+  const itensObrigatorios = ['sinalizacao', 'pneus', 'carroceria', 'cinto', 'farois', 'alarme_re', 'vazamentos', 'calcos', 'epi_capacete', 'epi_colete', 'epi_oculos', 'epi_botina', 'epi_luvas'];
+  for (let campoId of itensObrigatorios) {
+    if (!id(campoId)?.value) return mostrarErroInline(campoId, 'Selecione uma opção');
   }
 
-  // Validar campos
-  if (!validadorInspecaoFOB.validarFormulario()) {
-    validadorInspecaoFOB.mostrarResumoErros();
-    return;
+  let valTampaSilo = id('tampa_silo').value;
+  if (tipoVeiculo === 'CARGA_SECA') {
+    valTampaSilo = 'NA';
+  } else if (!valTampaSilo) {
+    return mostrarErroInline('tampa_silo', 'Selecione a condição da tampa do silo');
   }
 
-  // Verificar campos de inspeção
-  const camposInspecao = [
-    'sinalizacao', 'pneus', 'carroceria', 'cinto',
-    'farois', 'alarme_re', 'vazamentos', 'calcos',
-    'tampa_silo', 'epi_capacete', 'epi_colete',
-    'epi_oculos', 'epi_botina', 'epi_luvas'
-  ];
-
-  let temErroInspecao = false;
-  for (let campo of camposInspecao) {
-    if (!id(campo)?.value) {
-      notificacao.aviso('Campo Obrigatório', `Campo de inspeção vazio: ${campo}`);
-      temErroInspecao = true;
-      break;
-    }
-  }
-
-  if (temErroInspecao) return;
-
-  // Verificar paletes
   let paletesOpcao = document.querySelector('input[name="paletes_opcao"]:checked')?.value;
   let quantidadePaletes = '';
 
@@ -504,10 +404,7 @@ async function gerarJSONeToken() {
     paletesOpcao = 'NA';
   } else if (paletesOpcao === 'SIM') {
     quantidadePaletes = id('quantidade-paletes').value.trim();
-    if (!quantidadePaletes) {
-      notificacao.aviso('Quantidade de Paletes', 'Informe a quantidade de paletes!');
-      return;
-    }
+    if (!quantidadePaletes) return mostrarErroInline('quantidade-paletes', 'Informe a quantidade de paletes');
   }
 
   const inspecao = {
@@ -526,7 +423,7 @@ async function gerarJSONeToken() {
     alarme_re: id('alarme_re').value,
     vazamentos: id('vazamentos').value,
     calcos: id('calcos').value,
-    tampa_silo: tipoVeiculo === 'CARGA_SECA' ? 'NA' : id('tampa_silo').value,
+    tampa_silo: valTampaSilo,
     epi_capacete: id('epi_capacete').value,
     epi_colete: id('epi_colete').value,
     epi_oculos: id('epi_oculos').value,
@@ -537,67 +434,39 @@ async function gerarJSONeToken() {
   };
 
   try {
-    validadorInspecaoFOB.desabilitarDurante(true);
-    const toastCarregando = notificacao.carregando('Salvando inspeção...');
-
-    const response = await auth.fazerRequisicaoSegura(`${WORKER_URL}/api/salvar-inspecao`, {
+    const response = await fetch(`${WORKER_URL}/api/salvar-inspecao`, {
       method: 'POST',
-      body: JSON.stringify({
-        cpf,
-        inspecao_dados: inspecao
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cpf: cpfAtual, inspecao_dados: inspecao })
     });
 
     const resultado = await response.json();
 
-    toastCarregando.remove();
-
     if (resultado.sucesso) {
-      await offlineSync.salvarRascunhoInspecao(`inspecao_${resultado.id_inspecao}`, inspecao);
-
       id('form-inspecao').reset();
       id('token-gerado').innerText = resultado.id_inspecao;
-
-      logger.registrarInspecao(cpf, 'FOB', resultado.id_inspecao, {
-        placa: inspecao.placa,
-        pedido: inspecao.pedido
-      });
-
-      notificacao.sucesso('Inspeção Concluída! 🎉', `Código: ${resultado.id_inspecao}`);
       irParaSucesso();
     } else {
-      throw new Error(resultado.erro || 'Falha ao salvar');
+      mostrarErroInline('form-inspecao', 'Erro ao salvar inspeção: ' + (resultado.erro || 'Falha no servidor.'));
     }
-
   } catch (erro) {
-    notificacao.erro('Erro ao Salvar', erro.message);
-    logger.registrarErro('gerarJSONeToken', erro.stack);
-
-    try {
-      const idRascunho = await offlineSync.salvarRascunhoInspecao(null, inspecao);
-      notificacao.aviso('Modo Offline', `Salvo localmente. ID: ${idRascunho}`);
-    } catch (erroOffline) {
-      logger.registrarErro('salvar_offline', erroOffline.stack);
-    }
-  } finally {
-    validadorInspecaoFOB.desabilitarDurante(false);
+    console.error('Erro ao salvar inspeção:', erro);
+    mostrarErroInline('form-inspecao', 'Erro de conexão ao salvar inspeção!');
   }
 }
 
 // ============================================
-// ETAPA 3B: INSPEÇÃO CIF
+// ETAPA 3B: INSPEÇÃO CIF / FCA (32 ITENS)
 // ============================================
 
 async function salvarInspecaoCIF() {
-  const cpf = auth.obterCPFAtual();
+  limparTodosErros();
 
   const getVal = (idCif, idPadrao) => {
     const elCif = id(idCif);
     if (elCif && elCif.value.trim() !== '') return elCif.value.trim();
-    
     const elPadrao = id(idPadrao);
     if (elPadrao && elPadrao.value.trim() !== '') return elPadrao.value.trim();
-    
     return '';
   };
 
@@ -610,119 +479,77 @@ async function salvarInspecaoCIF() {
   const tipoChecklist = id('cif-tipo-checklist')?.value || '';
   const segmento = id('cif-segmento')?.value || '';
 
-  // Validar campos
-  if (!validadorInspecaoCIF.validarFormulario()) {
-    validadorInspecaoCIF.mostrarResumoErros();
-    return;
-  }
+  if (!nome) return mostrarErroInline('cif-nome', 'Informe seu nome completo');
+  if (!cnh) return mostrarErroInline('cif-cnh', 'Informe a CNH');
+  if (!validarTelefone(telefone)) return mostrarErroInline('cif-telefone', 'Telefone/WhatsApp inválido');
+  if (!validarPlaca(placa)) return mostrarErroInline('cif-placa', 'Placa inválida');
+  if (!validarPedido(pedido)) return mostrarErroInline('cif-pedido', 'Número do pedido inválido');
+  if (!validarEixos(eixos)) return mostrarErroInline('cif-eixos', 'Quantidade de eixos inválida');
 
-  if (!nome || !cnh) {
-    notificacao.aviso('Dados Incompletos', 'Preencha Nome e CNH!');
-    return;
-  }
-
-  if (!tipoChecklist || !segmento) {
-    notificacao.aviso('Informações Obrigatórias', 'Selecione Tipo de Checklist CIP e Segmento!');
-    return;
-  }
+  if (!tipoChecklist) return mostrarErroInline('cif-tipo-checklist', 'Selecione o Tipo de Checklist CIP');
+  if (!segmento) return mostrarErroInline('cif-segmento', 'Selecione o Segmento');
 
   const inspecaoDados = {
-    nome,
-    cnh,
-    telefone,
-    placa,
-    pedido,
-    eixos,
+    nome, cnh, telefone, placa, pedido, eixos,
     data: new Date().toLocaleDateString('pt-BR'),
     tipo_checklist: tipoChecklist,
-    segmento: segmento,
-    observacoes: ''
+    segmento: segmento
   };
 
-  // Verificar 32 itens
   for (let i = 1; i <= 32; i++) {
     const elItem = id(`cif-item-${i}`);
     const valorItem = elItem ? elItem.value : '';
 
     if (!valorItem) {
-      notificacao.aviso('Item Faltando', `Selecione resposta para o Item ${i}!`);
-      return;
+      return mostrarErroInline(`cif-item-${i}`, `Selecione uma opção para o Item ${i}`);
     }
-
     inspecaoDados[`item_${i}`] = valorItem;
   }
 
   try {
-    validadorInspecaoCIF.desabilitarDurante(true);
-    const toastCarregando = notificacao.carregando('Salvando inspeção CIF...');
-
-    const response = await auth.fazerRequisicaoSegura(`${WORKER_URL}/api/salvar-inspecao-cif`, {
+    const response = await fetch(`${WORKER_URL}/api/salvar-inspecao-cif`, {
       method: 'POST',
-      body: JSON.stringify({
-        cpf,
-        inspecao_dados: inspecaoDados
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cpf: cpfAtual, inspecao_dados: inspecaoDados })
     });
 
     const resultado = await response.json();
 
-    toastCarregando.remove();
-
     if (resultado.sucesso) {
-      await offlineSync.salvarRascunhoInspecao(`inspecao_cif_${resultado.id_inspecao}`, inspecaoDados);
+      const formCIF = id('form-inspecao-cif');
+      if (formCIF) formCIF.reset();
 
-      id('form-inspecao-cif').reset();
       id('token-gerado').innerText = resultado.id_inspecao;
-
-      logger.registrarInspecao(cpf, 'CIF', resultado.id_inspecao, {
-        placa,
-        pedido,
-        tipo_checklist: tipoChecklist
-      });
-
-      notificacao.sucesso('Inspeção CIF Concluída! 🎉', `Código: ${resultado.id_inspecao}`);
       irParaSucesso();
     } else {
-      throw new Error(resultado.erro || 'Falha ao salvar');
+      mostrarErroInline('form-inspecao-cif', 'Erro ao salvar CIF: ' + (resultado.erro || 'Erro no servidor'));
     }
-
   } catch (erro) {
-    notificacao.erro('Erro ao Salvar CIF', erro.message);
-    logger.registrarErro('salvarInspecaoCIF', erro.stack);
-
-    try {
-      const idRascunho = await offlineSync.salvarRascunhoInspecao(null, inspecaoDados);
-      notificacao.aviso('Modo Offline', `Salvo localmente. ID: ${idRascunho}`);
-    } catch (erroOffline) {
-      logger.registrarErro('salvar_cif_offline', erroOffline.stack);
-    }
-  } finally {
-    validadorInspecaoCIF.desabilitarDurante(false);
+    console.error('Erro ao salvar CIF:', erro);
+    mostrarErroInline('form-inspecao-cif', 'Erro de conexão ao salvar inspeção CIF!');
   }
 }
 
 // ============================================
-// NAVEGAÇÃO
+// NAVEGAÇÃO E RESET
 // ============================================
 
 function copiarToken() {
   const token = id('token-gerado').innerText;
   navigator.clipboard.writeText(token).then(() => {
-    notificacao.sucesso('Copiado!', 'Código copiado para a área de transferência');
-    logger.registrarAcao('token_copiado', `Token ${token} copiado`);
-  }).catch(() => {
-    notificacao.erro('Erro', 'Não foi possível copiar o código');
+    alert('📋 Código copiado com sucesso!');
   });
 }
 
 function voltarPaginaAnterior() {
-  const etapaCarregamento = !id('step-tipo-carregamento').classList.contains('hidden');
-  const etapaInspecao = !id('step-inspecao').classList.contains('hidden');
-  const etapaInspecaoCIF = !id('step-inspecao-cif').classList.contains('hidden');
+  limparTodosErros();
+  const etapaCarregamentoVisivel = !id('step-tipo-carregamento').classList.contains('hidden');
+  const etapaInspecaoVisivel = !id('step-inspecao').classList.contains('hidden');
+  const etapaInspecaoCIFVisivel = !id('step-inspecao-cif').classList.contains('hidden');
 
-  if (etapaInspecao || etapaInspecaoCIF) {
+  if (etapaInspecaoVisivel || etapaInspecaoCIFVisivel) {
     irParaSelecaoCarregamento();
-  } else if (etapaCarregamento && ehPrimeiraVez) {
+  } else if (etapaCarregamentoVisivel && ehPrimeiraVez) {
     irParaIntegracao();
   } else {
     irParaCPF();
@@ -730,15 +557,18 @@ function voltarPaginaAnterior() {
 }
 
 function irParaCPF() {
-  logger.registrarLogout();
-  auth.logout();
   ocultarTodas();
+  limparTodosErros();
 
-  validadorCPF?.resetar();
-  validadorIntegracao?.resetar();
-  validadorInspecaoFOB?.resetar();
-  validadorInspecaoCIF?.resetar();
+  if (id('input-cpf')) id('input-cpf').value = '';
+  if (id('form-prova')) id('form-prova').reset();
+  if (id('form-inspecao')) id('form-inspecao').reset();
+  if (id('form-inspecao-cif')) id('form-inspecao-cif').reset();
 
+  ocultarQuantidadePaletes();
+  alternarBloqueioProva();
+
+  cpfAtual = '';
   dadosMotoristaAtual = {};
   ultimaInspecaoAtual = null;
   ehPrimeiraVez = false;
@@ -749,8 +579,9 @@ function irParaCPF() {
 
 function irParaIntegracao() {
   ocultarTodas();
+  limparTodosErros();
 
-  validadorIntegracao?.resetar();
+  if (id('form-inspecao')) id('form-inspecao').reset();
   ocultarQuantidadePaletes();
   alternarBloqueioProva();
 
@@ -759,15 +590,15 @@ function irParaIntegracao() {
 
 function irParaInspecao() {
   ocultarTodas();
-  validadorInspecaoFOB?.resetar();
+  limparTodosErros();
+
   id('step-inspecao').classList.remove('hidden');
-  
   preencherUltimoCarregamento();
 }
 
 function irParaInspecaoCIF() {
   ocultarTodas();
-  validadorInspecaoCIF?.resetar();
+  limparTodosErros();
 
   const nome = dadosMotoristaAtual?.nome || ultimaInspecaoAtual?.nome || '';
   const cnh = dadosMotoristaAtual?.cnh || ultimaInspecaoAtual?.cnh || '';
@@ -793,27 +624,12 @@ function irParaSucesso() {
 function ocultarTodas() {
   id('step-cpf').classList.add('hidden');
   id('step-integracao').classList.add('hidden');
-  id('step-tipo-carregamento').classList.add('hidden');
+  if (id('step-tipo-carregamento')) id('step-tipo-carregamento').classList.add('hidden');
   id('step-inspecao').classList.add('hidden');
-  id('step-inspecao-cif').classList.add('hidden');
+  if (id('step-inspecao-cif')) id('step-inspecao-cif').classList.add('hidden');
   id('step-sucesso').classList.add('hidden');
 
   window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
 }
 
-// ============================================
-// SINCRONIZAÇÃO PERIÓDICA
-// ============================================
-
-setInterval(() => {
-  if (auth.estaAutenticado()) {
-    offlineSync.sincronizarOperacoes();
-  }
-}, 60000);
-
-window.addEventListener('beforeunload', () => {
-  if (auth.estaAutenticado()) {
-    logger.registrarLogout();
-    auth.logout();
-  }
-});
+document.addEventListener('DOMContentLoaded', irParaCPF);
