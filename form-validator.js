@@ -1,5 +1,5 @@
 // ============================================
-// OBJETO AUXILIAR DE REGRAS DE VALIDAÇÃO
+// OBJETO DE REGRAS AUXILIARES
 // ============================================
 const validador = {
   validarCPF(cpf) {
@@ -35,7 +35,7 @@ const validador = {
     const regexPlaca = /^[A-Z]{3}[0-9]{4}$|^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
     return {
       valido: regexPlaca.test(placa),
-      erro: 'Placa inválida (Use o formato ABC1234 ou ABC1A34)'
+      erro: 'Placa inválida (Use ABC1234 ou ABC1A34)'
     };
   },
 
@@ -311,5 +311,4 @@ class FormValidator {
   }
 }
 
-// Exportar globalmente
 window.FormValidator = FormValidator;
