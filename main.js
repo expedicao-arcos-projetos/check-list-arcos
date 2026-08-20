@@ -19,7 +19,7 @@ let ehPrimeiraVez = false;
 let tipoCarregamentoSelecionado = '';
 
 // ============================================
-// FUNÇÕES DE ERRO INLINE (CAIXA VERMELHA)
+// AUXILIARES DE DOM E ERRO INLINE (CAIXA VERMELHA)
 // ============================================
 
 function id(el) {
@@ -30,7 +30,7 @@ function mostrarErroInline(elementId, mensagem) {
   const elemento = id(elementId);
   if (!elemento) return;
 
-  const container = elemento.closest('.input-group') || elemento.parentElement;
+  const container = elemento.closest('.input-group') || elemento.closest('.aceite-container') || elemento.closest('.tipo-carregamento-opcoes') || elemento.parentElement;
   removerErroInline(elementId);
 
   container.classList.add('has-error');
@@ -41,14 +41,16 @@ function mostrarErroInline(elementId, mensagem) {
   container.appendChild(feedback);
 
   elemento.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  elemento.focus();
+  if (typeof elemento.focus === 'function') {
+    elemento.focus();
+  }
 }
 
 function removerErroInline(elementId) {
   const elemento = id(elementId);
   if (!elemento) return;
 
-  const container = elemento.closest('.input-group') || elemento.parentElement;
+  const container = elemento.closest('.input-group') || elemento.closest('.aceite-container') || elemento.closest('.tipo-carregamento-opcoes') || elemento.parentElement;
   container.classList.remove('has-error');
 
   const feedbackAntigo = container.querySelector('.form-feedback');
@@ -56,10 +58,11 @@ function removerErroInline(elementId) {
 }
 
 function limparTodosErros() {
-  document.querySelectorAll('.input-group').forEach(group => {
+  document.querySelectorAll('.has-error').forEach(group => {
     group.classList.remove('has-error');
-    const feedback = group.querySelector('.form-feedback');
-    if (feedback) feedback.remove();
+  });
+  document.querySelectorAll('.form-feedback').forEach(feedback => {
+    feedback.remove();
   });
 }
 
@@ -77,7 +80,7 @@ function validarPlaca(placa) {
 }
 
 function validarPedido(pedido) {
-  const regexPedido = /^[0-9]{7,9}$/;
+  const regexPedido = /^[0-9]{6,9}$/;
   return regexPedido.test(pedido);
 }
 
@@ -98,10 +101,10 @@ function validarEixos(eixos) {
 async function verificarAcesso() {
   limparTodosErros();
   const inputCPF = id('input-cpf');
-  const cpf = inputCPF.value.trim();
+  const cpf = inputCPF.value.trim().replace(/[^\d]/g, '');
 
-  if (cpf.length !== 11 || isNaN(cpf)) {
-    mostrarErroInline('input-cpf', 'CPF inválido! Digite 11 números.');
+  if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) {
+    mostrarErroInline('input-cpf', 'CPF inválido! Digite os 11 números corretamente.');
     return;
   }
 
@@ -139,6 +142,7 @@ function irParaSelecaoCarregamento() {
 }
 
 function confirmarTipoCarregamento() {
+  limparTodosErros();
   const opcao = document.querySelector('input[name="modelo_carregamento"]:checked')?.value;
 
   if (!opcao) {
@@ -634,7 +638,5 @@ function ocultarTodas() {
 
   window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
 }
-
-document.addEventListener('DOMContentLoaded', irParaCPF);
 
 document.addEventListener('DOMContentLoaded', irParaCPF);
