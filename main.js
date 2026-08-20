@@ -1,10 +1,19 @@
 // ============================================
-// CONFIGURAÇÃO INICIAL E CONSTANTES
+// MAIN.JS V3 - COM VALIDAÇÃO AVANÇADA
+// FEEDBACK VISUAL LIMPO (SEM ALERTS)
 // ============================================
+
+/**
+ * Versão melhorada com:
+ * - Validação avançada com feedback inline
+ * - Sem alerts (popup)
+ * - Mensagens de erro limpas e profissionais
+ * - Validação em tempo real
+ * - Indicadores visuais (cores, ícones)
+ */
 
 const WORKER_URL = 'https://sistema-inspecoes.samuelvivi1996.workers.dev';
 
-// GABARITO DA PROVA (4 QUESTÕES)
 const GABARITO = {
   q1: 'Borracha',
   q2: 'Todos os dias',
@@ -12,92 +21,136 @@ const GABARITO = {
   q4: 'Bloqueada pelo responsável CSN CIMENTOS.'
 };
 
-let cpfAtual = '';
+let validadorCPF = null;
+let validadorIntegracao = null;
+let validadorInspecaoFOB = null;
+let validadorInspecaoCIF = null;
+
 let dadosMotoristaAtual = {};
-let ultimaInspecaoAtual = null; // Guarda o último checklist retornado pelo backend
+let ultimaInspecaoAtual = null;
 let ehPrimeiraVez = false;
 let tipoCarregamentoSelecionado = '';
 
-// ============================================
-// FUNÇÕES AUXILIARES DE VALIDAÇÃO
-// ============================================
-
-function validarPlaca(placa) {
-  const regexPlaca = /^[A-Z]{3}[0-9]{1}[A-Z0-9]{1}[0-9]{2}$/;
-  return regexPlaca.test(placa);
-}
-
-function validarPedido(pedido) {
-  const regexPedido = /^[0-9]{7,9}$/;
-  return regexPedido.test(pedido);
-}
-
-function validarTelefone(telefone) {
-  const regexTelefone = /^[1-9]{2}(?:[2-8][0-9]{7}|9[0-9]{8})$/;
-  return regexTelefone.test(telefone);
-}
-
-function validarEixos(eixos) {
-  const regexEixos = /^[1-9]{1}$/;
-  return regexEixos.test(eixos);
-}
-
-function id(el) {
-  return document.getElementById(el);
-}
+const id = (el) => document.getElementById(el);
 
 // ============================================
-// ETAPA 1: VERIFICAR CPF E TIPO DE CARREGAMENTO
+// INICIALIZAÇÃO
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  inicializarValidadores();
+  
+  if (!auth.estaAutenticado()) {
+    irParaCPF();
+  } else {
+    irParaSelecaoCarregamento();
+  }
+
+  logger.registrarAcao('pagina_carregada', 'Sistema carregado');
+});
+
+/**
+ * Inicializar todos os validadores de formulário
+ */
+function inicializarValidadores() {
+  // Validador de CPF (Etapa 1)
+  validadorCPF = new formValidator('form-cpf-busca');
+  validadorCPF.adicionarRegra('input-cpf', 'cpf', 'CPF inválido');
+
+  // Validador de Integração (Etapa 2)
+  validadorIntegracao = new formValidator('form-prova');
+  validadorIntegracao
+    .adicionarRegra('reg-nome', 'obrigatorio', 'Nome completo é obrigatório')
+    .adicionarRegra('reg-nome', 'minimo', 'Mínimo 3 caracteres', { min: 3 })
+    .adicionarRegra('reg-rg', 'rg', 'RG inválido')
+    .adicionarRegra('reg-telefone', 'telefone', 'Telefone com DDD inválido')
+    .adicionarRegra('reg-placa', 'placa', 'Placa inválida');
+
+  // Validador de Inspeção FOB (Etapa 3A)
+  validadorInspecaoFOB = new formValidator('form-inspecao');
+  validadorInspecaoFOB
+    .adicionarRegra('nome', 'obrigatorio', 'Nome é obrigatório')
+    .adicionarRegra('cnh', 'cnh', 'CNH inválida')
+    .adicionarRegra('telefone', 'telefone', 'Telefone inválido')
+    .adicionarRegra('placa', 'placa', 'Placa inválida')
+    .adicionarRegra('pedido', 'pedido', 'Número de pedido inválido')
+    .adicionarRegra('eixos', 'eixos', 'Quantidade de eixos inválida (1-9)');
+
+  // Validador de Inspeção CIF (Etapa 3B)
+  validadorInspecaoCIF = new formValidator('form-inspecao-cif');
+  validadorInspecaoCIF
+    .adicionarRegra('cif-nome', 'obrigatorio', 'Nome é obrigatório')
+    .adicionarRegra('cif-cnh', 'cnh', 'CNH inválida')
+    .adicionarRegra('cif-telefone', 'telefone', 'Telefone inválido')
+    .adicionarRegra('cif-placa', 'placa', 'Placa inválida')
+    .adicionarRegra('cif-pedido', 'pedido', 'Número de pedido inválido')
+    .adicionarRegra('cif-eixos', 'eixos', 'Quantidade de eixos inválida (1-9)');
+}
+
+// ============================================
+// ETAPA 1: VERIFICAR CPF E LOGIN
 // ============================================
 
 async function verificarAcesso() {
-  const inputCPF = document.getElementById('input-cpf');
-  const cpf = inputCPF.value.trim();
-
-  if (cpf.length !== 11 || isNaN(cpf)) {
-    alert('❌ CPF inválido! Digite 11 números.');
+  const inputCPF = id('input-cpf');
+  
+  // Validar CPF
+  if (!validadorCPF.validarCampo('input-cpf')) {
     return;
   }
 
-  cpfAtual = cpf;
+  const cpf = inputCPF.value.trim();
 
   try {
-    const response = await fetch(`${WORKER_URL}/api/verificar-cpf`, {
+    validadorCPF.desabilitarDurante(true);
+    const toastCarregando = notificacao.carregando('Verificando acesso...');
+
+    // Fazer login
+    const resultadoLogin = await auth.login(cpf);
+    
+    toastCarregando.remove();
+    logger.registrarLogin(cpf);
+    notificacao.sucesso('Bem-vindo!', `Olá, ${resultadoLogin.nome || 'Motorista'}!`);
+
+    // Verificar se é primeira vez
+    const response = await auth.fazerRequisicaoSegura(`${WORKER_URL}/api/verificar-cpf`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cpf })
     });
 
     const resultado = await response.json();
 
-    if (resultado.existe) {
-      ehPrimeiraVez = false;
-      dadosMotoristaAtual = resultado.dados || {};
-      ultimaInspecaoAtual = resultado.ultima_inspecao || null; // Armazena o último checklist realizado
+    ehPrimeiraVez = !resultado.existe;
+    dadosMotoristaAtual = resultado.dados || {};
+    ultimaInspecaoAtual = resultado.ultima_inspecao || null;
 
-      irParaSelecaoCarregamento();
-    } else {
-      ehPrimeiraVez = true;
-      dadosMotoristaAtual = {};
-      ultimaInspecaoAtual = null; // Mantém desmarcado para o primeiro acesso
+    if (ehPrimeiraVez) {
+      logger.registrarAcao('primeiro_acesso', `Primeiro acesso do CPF ${cpf}`);
       irParaIntegracao();
+    } else {
+      logger.registrarAcao('acesso_repetido', `Acesso repetido do CPF ${cpf}`);
+      irParaSelecaoCarregamento();
     }
+
   } catch (erro) {
-    console.error('Erro ao verificar CPF:', erro);
-    alert('⚠️ Erro ao conectar com o servidor. Verifique a conexão.');
+    notificacao.erro('Erro de Autenticação', erro.message || 'Falha ao fazer login');
+    logger.registrarErro('verificarAcesso', erro.stack);
+  } finally {
+    validadorCPF.desabilitarDurante(false);
   }
 }
 
 function irParaSelecaoCarregamento() {
   ocultarTodas();
-  document.getElementById('step-tipo-carregamento').classList.remove('hidden');
+  id('step-tipo-carregamento').classList.remove('hidden');
 }
 
 function confirmarTipoCarregamento() {
   const opcao = document.querySelector('input[name="modelo_carregamento"]:checked')?.value;
 
   if (!opcao) {
-    alert('⚠️ Por favor, selecione o Tipo de Carregamento (FOB ou TRANSFERÊNCIA/CIF)!');
+    notificacao.aviso('Seleção Obrigatória', 'Por favor, selecione o Tipo de Carregamento (FOB ou TRANSFERÊNCIA/CIF)!');
+    logger.registrarValidacaoFalhada('tipo_carregamento', '', 'Não selecionado');
     return;
   }
 
@@ -111,76 +164,12 @@ function confirmarTipoCarregamento() {
 }
 
 // ============================================
-// AUTO-PREENCHIMENTO DO ÚLTIMO CARREGAMENTO
-// ============================================
-
-function preencherUltimoCarregamento() {
-  // Se for 1º acesso ou não houver histórico de inspeção, nada é preenchido
-  if (!ultimaInspecaoAtual) return;
-
-  const dados = ultimaInspecaoAtual;
-
-  // 1. Dados Básicos e do Veículo (O Pedido NUNCA é preenchido automaticamente)
-  if (id('nome') && dados.nome) id('nome').value = dados.nome;
-  if (id('cnh') && dados.cnh) id('cnh').value = dados.cnh;
-  if (id('telefone') && dados.telefone) id('telefone').value = dados.telefone;
-  if (id('placa') && dados.placa) id('placa').value = dados.placa;
-  if (id('eixos') && dados.eixos) id('eixos').value = dados.eixos;
-  
-  // Limpa explicitamente o pedido para garantir que o motorista digite o atual
-  if (id('pedido')) id('pedido').value = '';
-
-  // 2. Tipo de Veículo (Carga Seca ou Silo)
-  if (dados.tipo_veiculo) {
-    const radioTipo = document.querySelector(`input[name="tipo_veiculo"][value="${dados.tipo_veiculo}"]`);
-    if (radioTipo) {
-      radioTipo.checked = true;
-      atualizarCamposPorTipoVeiculo();
-    }
-  }
-
-  // 3. Itens de Inspeção Veicular
-  if (id('sinalizacao') && dados.sinalizacao) id('sinalizacao').value = dados.sinalizacao;
-  if (id('pneus') && dados.pneus) id('pneus').value = dados.pneus;
-  if (id('carroceria') && dados.carroceria) id('carroceria').value = dados.carroceria;
-  if (id('cinto') && dados.cinto) id('cinto').value = dados.cinto;
-  if (id('farois') && dados.farois) id('farois').value = dados.farois;
-  if (id('alarme_re') && dados.alarme_re) id('alarme_re').value = dados.alarme_re;
-  if (id('vazamentos') && dados.vazamentos) id('vazamentos').value = dados.vazamentos;
-  if (id('calcos') && dados.calcos) id('calcos').value = dados.calcos;
-  if (id('tampa_silo') && dados.tampa_silo) id('tampa_silo').value = dados.tampa_silo;
-
-  // 4. EPIs
-  if (id('epi_capacete') && dados.epi_capacete) id('epi_capacete').value = dados.epi_capacete;
-  if (id('epi_colete') && dados.epi_colete) id('epi_colete').value = dados.epi_colete;
-  if (id('epi_oculos') && dados.epi_oculos) id('epi_oculos').value = dados.epi_oculos;
-  if (id('epi_botina') && dados.epi_botina) id('epi_botina').value = dados.epi_botina;
-  if (id('epi_luvas') && dados.epi_luvas) id('epi_luvas').value = dados.epi_luvas;
-
-  // 5. Paletes
-  if (dados.paletes_opcao) {
-    const radioPalete = document.querySelector(`input[name="paletes_opcao"][value="${dados.paletes_opcao}"]`);
-    if (radioPalete) {
-      radioPalete.checked = true;
-      if (dados.paletes_opcao === 'SIM') {
-        mostrarQuantidadePaletes();
-        if (id('quantidade-paletes') && dados.paletes_quantidade) {
-          id('quantidade-paletes').value = dados.paletes_quantidade;
-        }
-      } else {
-        ocultarQuantidadePaletes();
-      }
-    }
-  }
-}
-
-// ============================================
-// LÓGICA DE BLOQUEIO / DESBLOQUEIO DA PROVA
+// ETAPA 2: INTEGRAÇÃO & PROVA
 // ============================================
 
 function alternarBloqueioProva() {
-  const aceiteVideo = document.getElementById('aceite-video')?.checked;
-  const secaoProva = document.getElementById('secao-prova');
+  const aceiteVideo = id('aceite-video')?.checked;
+  const secaoProva = id('secao-prova');
 
   if (!secaoProva) return;
 
@@ -196,41 +185,37 @@ function alternarBloqueioProva() {
   }
 }
 
-// ============================================
-// ETAPA 2: INTEGRAÇÃO & PROVA (1º Acesso)
-// ============================================
-
 async function concluirIntegracao() {
-  const nome = document.getElementById('reg-nome').value.trim();
-  const rg = document.getElementById('reg-rg').value.trim();
-  const telefone = document.getElementById('reg-telefone').value.trim();
-  let placa = document.getElementById('reg-placa').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const nome = id('reg-nome').value.trim();
+  const rg = id('reg-rg').value.trim();
+  const telefone = id('reg-telefone').value.trim();
+  const placa = id('reg-placa').value.trim().toUpperCase();
 
-  const aceiteVideo = document.getElementById('aceite-video').checked;
-  const aceitePPAE = document.getElementById('aceite-ppae').checked;
-  const aceiteFOB = document.getElementById('aceite-fob').checked;
-  const aceiteLGPD = document.getElementById('aceite-lgpd')?.checked;
-
-  if (!nome || !rg || !telefone || !placa) {
-    alert('⚠️ Por favor, preencha todos os dados de cadastro (Nome, RG, Telefone e Placa)!');
+  // Validar campos
+  if (!validadorIntegracao.validarFormulario()) {
+    validadorIntegracao.mostrarResumoErros();
     return;
   }
 
-  if (!validarTelefone(telefone)) {
-    alert('❌ Telefone/WhatsApp inválido! Digite um número válido com DDD.');
-    return;
-  }
-
-  if (!validarPlaca(placa)) {
-    alert('❌ Placa do veículo inválida!');
-    return;
-  }
+  // Verificar aceites
+  const aceiteVideo = id('aceite-video').checked;
+  const aceitePPAE = id('aceite-ppae').checked;
+  const aceiteFOB = id('aceite-fob').checked;
+  const aceiteLGPD = id('aceite-lgpd')?.checked;
 
   if (!aceiteVideo) {
-    alert('⚠️ Você precisa confirmar que assistiu ao VÍDEO DE INTRODUÇÃO!');
+    notificacao.aviso('Aceite Obrigatório', 'Confirme que assistiu ao VÍDEO DE INTRODUÇÃO!');
+    logger.registrarValidacaoFalhada('aceite_video', '', 'Não confirmado');
     return;
   }
 
+  if (!aceitePPAE || !aceiteFOB || !aceiteLGPD) {
+    notificacao.aviso('Aceites Obrigatórios', 'Marque o aceite em TODOS os termos de compromisso!');
+    logger.registrarValidacaoFalhada('aceites', '', 'Não marcados');
+    return;
+  }
+
+  // Verificar prova
   const respostas = {
     q1: document.querySelector('input[name="q1"]:checked')?.value,
     q2: document.querySelector('input[name="q2"]:checked')?.value,
@@ -239,89 +224,108 @@ async function concluirIntegracao() {
   };
 
   if (!respostas.q1 || !respostas.q2 || !respostas.q3 || !respostas.q4) {
-    alert('⚠️ Responda todas as 4 questões da prova!');
+    notificacao.aviso('Prova Incompleta', 'Responda todas as 4 questões!');
+    logger.registrarValidacaoFalhada('prova', '', 'Questões não respondidas');
     return;
   }
 
-  if (!aceitePPAE || !aceiteFOB || !aceiteLGPD) {
-    alert('⚠️ Marque o aceite em TODOS os termos de compromisso!');
-    return;
-  }
-
+  // Avaliar prova
   let acertos = 0;
-  let feedback = 'Resultado da Prova:\n\n';
+  let detalhes = [];
 
   for (let questao in GABARITO) {
     if (respostas[questao] === GABARITO[questao]) {
       acertos++;
-      feedback += `✅ Questão ${questao.replace('q', '')}: Correto!\n`;
+      detalhes.push(`✅ Q${questao.replace('q', '')}`);
     } else {
-      feedback += `❌ Questão ${questao.replace('q', '')}: Incorreto.\n`;
+      detalhes.push(`❌ Q${questao.replace('q', '')}`);
     }
   }
 
-  feedback += `\nTotal: ${acertos}/4 acertos`;
-  alert(feedback);
+  if (acertos < 4) {
+    notificacao.erro(
+      'Prova Reprovada',
+      `Você acertou ${acertos}/4 questões.<br/>Precisa acertar TODAS as questões!<br/><br/>${detalhes.join('<br/>')}`
+    );
+    logger.registrarAcao('prova_reprovada', `Motorista errou ${4 - acertos} questões`, { detalhes });
+    return;
+  }
 
-  if (acertos === 4) {
+  // Prova aprovada - mostrar modal
+  const confirmado = await notificacao.modal(
+    'Parabéns! 🎉',
+    `Você foi aprovado!<br/><br/>${detalhes.join('<br/>')}`,
+    [{ label: 'Continuar', tipo: 'primary', valor: true }],
+    'success'
+  );
+
+  if (!confirmado) return;
+
+  try {
+    validadorIntegracao.desabilitarDurante(true);
+    const toastCarregando = notificacao.carregando('Salvando dados...');
+
+    // Salvar motorista
     await salvarMotoristaComProva(nome, rg, telefone, placa, respostas);
 
-    dadosMotoristaAtual = { nome, rg, telefone, placa };
+    toastCarregando.remove();
 
-    if (id('nome')) id('nome').value = nome;
-    if (id('placa')) id('placa').value = placa;
-    if (id('telefone')) id('telefone').value = telefone;
+    logger.registrarAcao('integracao_completa', 'Motorista integrado com sucesso', { nome });
+    notificacao.sucesso('Integração Concluída!', 'Dados salvos com sucesso!');
 
     irParaSelecaoCarregamento();
-  } else {
-    alert('⚠️ Você precisa acertar TODAS as 4 questões para avançar!');
+
+  } catch (erro) {
+    notificacao.erro('Erro ao Salvar', 'Falha ao salvar dados de integração');
+    logger.registrarErro('concluirIntegracao', erro.stack);
+  } finally {
+    validadorIntegracao.desabilitarDurante(false);
   }
 }
 
 async function salvarMotoristaComProva(nome, rg, telefone, placa, respostas) {
-  const aceiteVideo = document.getElementById('aceite-video').checked;
+  const cpf = auth.obterCPFAtual();
 
-  try {
-    await fetch(`${WORKER_URL}/api/salvar-motorista`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        cpf: cpfAtual,
-        nome: nome,
-        rg: rg,
-        telefone: telefone,
-        placa: placa,
-        aceite_video: aceiteVideo,
-        aceite_ppae: true,
-        aceite_fob: true,
-        aceite_lgpd: true,
-        data_aceite: new Date().toISOString(),
-        prova_respondida: {
-          data: new Date().toISOString(),
-          respostas,
-          resultado: 'aprovado'
-        }
-      })
-    });
-  } catch (erro) {
-    console.error('Erro ao salvar motorista:', erro);
+  const response = await auth.fazerRequisicaoSegura(`${WORKER_URL}/api/salvar-motorista`, {
+    method: 'POST',
+    body: JSON.stringify({
+      cpf,
+      nome,
+      rg,
+      telefone,
+      placa,
+      aceite_video: true,
+      aceite_ppae: true,
+      aceite_fob: true,
+      aceite_lgpd: true,
+      data_aceite: new Date().toISOString(),
+      prova_respondida: {
+        data: new Date().toISOString(),
+        respostas,
+        resultado: 'aprovado'
+      }
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error('Falha ao salvar motorista');
   }
 }
 
 // ============================================
-// CONTROLE DO CAMPO DE PALETES
+// CONTROLE DE PALETES
 // ============================================
 
 function mostrarQuantidadePaletes() {
-  const container = document.getElementById('quantidade-paletes-container');
+  const container = id('quantidade-paletes-container');
   if (container) container.style.display = 'block';
 }
 
 function ocultarQuantidadePaletes() {
-  const container = document.getElementById('quantidade-paletes-container');
+  const container = id('quantidade-paletes-container');
   if (container) container.style.display = 'none';
 
-  const inputQtd = document.getElementById('quantidade-paletes');
+  const inputQtd = id('quantidade-paletes');
   if (inputQtd) inputQtd.value = '';
 }
 
@@ -331,9 +335,9 @@ function ocultarQuantidadePaletes() {
 
 function atualizarCamposPorTipoVeiculo() {
   const tipoVeiculo = document.querySelector('input[name="tipo_veiculo"]:checked')?.value;
-  const containerTampaSilo = document.getElementById('container-tampa-silo');
-  const selectTampaSilo = document.getElementById('tampa_silo');
-  const secaoPaletes = document.getElementById('secao-paletes');
+  const containerTampaSilo = id('container-tampa-silo');
+  const selectTampaSilo = id('tampa_silo');
+  const secaoPaletes = id('secao-paletes');
   const radiosPaletes = document.querySelectorAll('input[name="paletes_opcao"]');
 
   if (tipoVeiculo === 'CARGA_SECA') {
@@ -355,127 +359,204 @@ document.addEventListener('change', function(e) {
   }
 });
 
+function preencherUltimoCarregamento() {
+  if (!ultimaInspecaoAtual) return;
+
+  const dados = ultimaInspecaoAtual;
+
+  // Dados básicos
+  if (id('nome') && dados.nome) id('nome').value = dados.nome;
+  if (id('cnh') && dados.cnh) id('cnh').value = dados.cnh;
+  if (id('telefone') && dados.telefone) id('telefone').value = dados.telefone;
+  if (id('placa') && dados.placa) id('placa').value = dados.placa;
+  if (id('eixos') && dados.eixos) id('eixos').value = dados.eixos;
+  if (id('pedido')) id('pedido').value = '';
+
+  // Tipo de veículo
+  if (dados.tipo_veiculo) {
+    const radioTipo = document.querySelector(`input[name="tipo_veiculo"][value="${dados.tipo_veiculo}"]`);
+    if (radioTipo) {
+      radioTipo.checked = true;
+      atualizarCamposPorTipoVeiculo();
+    }
+  }
+
+  // Itens de inspeção
+  if (id('sinalizacao') && dados.sinalizacao) id('sinalizacao').value = dados.sinalizacao;
+  if (id('pneus') && dados.pneus) id('pneus').value = dados.pneus;
+  if (id('carroceria') && dados.carroceria) id('carroceria').value = dados.carroceria;
+  if (id('cinto') && dados.cinto) id('cinto').value = dados.cinto;
+  if (id('farois') && dados.farois) id('farois').value = dados.farois;
+  if (id('alarme_re') && dados.alarme_re) id('alarme_re').value = dados.alarme_re;
+  if (id('vazamentos') && dados.vazamentos) id('vazamentos').value = dados.vazamentos;
+  if (id('calcos') && dados.calcos) id('calcos').value = dados.calcos;
+  if (id('tampa_silo') && dados.tampa_silo) id('tampa_silo').value = dados.tampa_silo;
+
+  // EPIs
+  if (id('epi_capacete') && dados.epi_capacete) id('epi_capacete').value = dados.epi_capacete;
+  if (id('epi_colete') && dados.epi_colete) id('epi_colete').value = dados.epi_colete;
+  if (id('epi_oculos') && dados.epi_oculos) id('epi_oculos').value = dados.epi_oculos;
+  if (id('epi_botina') && dados.epi_botina) id('epi_botina').value = dados.epi_botina;
+  if (id('epi_luvas') && dados.epi_luvas) id('epi_luvas').value = dados.epi_luvas;
+
+  // Paletes
+  if (dados.paletes_opcao) {
+    const radioPalete = document.querySelector(`input[name="paletes_opcao"][value="${dados.paletes_opcao}"]`);
+    if (radioPalete) {
+      radioPalete.checked = true;
+      if (dados.paletes_opcao === 'SIM') {
+        mostrarQuantidadePaletes();
+        if (id('quantidade-paletes') && dados.paletes_quantidade) {
+          id('quantidade-paletes').value = dados.paletes_quantidade;
+        }
+      } else {
+        ocultarQuantidadePaletes();
+      }
+    }
+  }
+}
+
 async function gerarJSONeToken() {
-  let placaDigitada = document.getElementById('placa').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  let pedidoDigitado = document.getElementById('pedido').value.trim();
-  let eixosDigitados = document.getElementById('eixos').value.trim();
-  let telefoneDigitado = document.getElementById('telefone').value.trim();
+  const cpf = auth.obterCPFAtual();
+  
+  let placaDigitada = id('placa').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  let pedidoDigitado = id('pedido').value.trim();
+  let eixosDigitados = id('eixos').value.trim();
+  let telefoneDigitado = id('telefone').value.trim();
 
   const tipoVeiculo = document.querySelector('input[name="tipo_veiculo"]:checked')?.value;
 
   if (!tipoVeiculo) {
-    alert('⚠️ Por favor, selecione qual é o seu tipo de veículo!');
+    notificacao.aviso('Tipo de Veículo', 'Por favor, selecione qual é o seu tipo de veículo!');
+    logger.registrarValidacaoFalhada('tipo_veiculo', '', 'Não selecionado');
     return;
   }
 
-  if (!validarTelefone(telefoneDigitado)) {
-    alert('❌ Telefone/WhatsApp inválido!');
+  // Validar campos
+  if (!validadorInspecaoFOB.validarFormulario()) {
+    validadorInspecaoFOB.mostrarResumoErros();
     return;
   }
 
-  if (!validarPlaca(placaDigitada)) {
-    alert('❌ Placa do veículo inválida!');
-    return;
+  // Verificar campos de inspeção
+  const camposInspecao = [
+    'sinalizacao', 'pneus', 'carroceria', 'cinto',
+    'farois', 'alarme_re', 'vazamentos', 'calcos',
+    'tampa_silo', 'epi_capacete', 'epi_colete',
+    'epi_oculos', 'epi_botina', 'epi_luvas'
+  ];
+
+  let temErroInspecao = false;
+  for (let campo of camposInspecao) {
+    if (!id(campo)?.value) {
+      notificacao.aviso('Campo Obrigatório', `Campo de inspeção vazio: ${campo}`);
+      temErroInspecao = true;
+      break;
+    }
   }
 
-  if (!validarPedido(pedidoDigitado)) {
-    alert('❌ Número de Pedido inválido!');
-    return;
-  }
+  if (temErroInspecao) return;
 
-  if (!validarEixos(eixosDigitados)) {
-    alert('❌ Quantidade de eixos inválida!');
-    return;
-  }
-
+  // Verificar paletes
   let paletesOpcao = document.querySelector('input[name="paletes_opcao"]:checked')?.value;
   let quantidadePaletes = '';
 
   if (tipoVeiculo === 'CARRETA_SILO') {
     paletesOpcao = 'NA';
   } else if (paletesOpcao === 'SIM') {
-    quantidadePaletes = document.getElementById('quantidade-paletes').value.trim();
+    quantidadePaletes = id('quantidade-paletes').value.trim();
     if (!quantidadePaletes) {
-      alert('⚠️ Se selecionou SIM em paletes, informe a quantidade!');
+      notificacao.aviso('Quantidade de Paletes', 'Informe a quantidade de paletes!');
       return;
     }
   }
 
-  let valTampaSilo = document.getElementById('tampa_silo').value;
-  if (tipoVeiculo === 'CARGA_SECA') {
-    valTampaSilo = 'NA';
-  }
-
   const inspecao = {
-    nome: document.getElementById('nome').value.trim(),
-    cnh: document.getElementById('cnh').value.trim(),
+    nome: id('nome').value.trim(),
+    cnh: id('cnh').value.trim(),
     telefone: telefoneDigitado,
     placa: placaDigitada,
     pedido: pedidoDigitado,
     eixos: eixosDigitados,
     tipo_veiculo: tipoVeiculo,
-    sinalizacao: document.getElementById('sinalizacao').value,
-    pneus: document.getElementById('pneus').value,
-    carroceria: document.getElementById('carroceria').value,
-    cinto: document.getElementById('cinto').value,
-    farois: document.getElementById('farois').value,
-    alarme_re: document.getElementById('alarme_re').value,
-    vazamentos: document.getElementById('vazamentos').value,
-    calcos: document.getElementById('calcos').value,
-    tampa_silo: valTampaSilo,
-    epi_capacete: document.getElementById('epi_capacete').value,
-    epi_colete: document.getElementById('epi_colete').value,
-    epi_oculos: document.getElementById('epi_oculos').value,
-    epi_botina: document.getElementById('epi_botina').value,
-    epi_luvas: document.getElementById('epi_luvas').value,
+    sinalizacao: id('sinalizacao').value,
+    pneus: id('pneus').value,
+    carroceria: id('carroceria').value,
+    cinto: id('cinto').value,
+    farois: id('farois').value,
+    alarme_re: id('alarme_re').value,
+    vazamentos: id('vazamentos').value,
+    calcos: id('calcos').value,
+    tampa_silo: tipoVeiculo === 'CARGA_SECA' ? 'NA' : id('tampa_silo').value,
+    epi_capacete: id('epi_capacete').value,
+    epi_colete: id('epi_colete').value,
+    epi_oculos: id('epi_oculos').value,
+    epi_botina: id('epi_botina').value,
+    epi_luvas: id('epi_luvas').value,
     paletes_opcao: paletesOpcao || 'NA',
     paletes_quantidade: quantidadePaletes || ''
   };
 
-  if (!inspecao.nome || !inspecao.cnh || !inspecao.placa || !inspecao.pedido || !inspecao.eixos ||
-      !inspecao.sinalizacao || !inspecao.pneus || !inspecao.carroceria || !inspecao.cinto || 
-      !inspecao.farois || !inspecao.alarme_re || !inspecao.vazamentos || !inspecao.calcos || 
-      !inspecao.tampa_silo || !inspecao.epi_capacete || !inspecao.epi_colete || 
-      !inspecao.epi_oculos || !inspecao.epi_botina || !inspecao.epi_luvas) {
-    alert('⚠️ Preencha todos os campos obrigatórios!');
-    return;
-  }
-
   try {
-    const response = await fetch(`${WORKER_URL}/api/salvar-inspecao`, {
+    validadorInspecaoFOB.desabilitarDurante(true);
+    const toastCarregando = notificacao.carregando('Salvando inspeção...');
+
+    const response = await auth.fazerRequisicaoSegura(`${WORKER_URL}/api/salvar-inspecao`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        cpf: cpfAtual,
+        cpf,
         inspecao_dados: inspecao
       })
     });
 
     const resultado = await response.json();
 
+    toastCarregando.remove();
+
     if (resultado.sucesso) {
-      document.getElementById('form-inspecao').reset();
-      document.getElementById('token-gerado').innerText = resultado.id_inspecao;
+      await offlineSync.salvarRascunhoInspecao(`inspecao_${resultado.id_inspecao}`, inspecao);
+
+      id('form-inspecao').reset();
+      id('token-gerado').innerText = resultado.id_inspecao;
+
+      logger.registrarInspecao(cpf, 'FOB', resultado.id_inspecao, {
+        placa: inspecao.placa,
+        pedido: inspecao.pedido
+      });
+
+      notificacao.sucesso('Inspeção Concluída! 🎉', `Código: ${resultado.id_inspecao}`);
       irParaSucesso();
     } else {
-      alert('⚠️ Erro ao salvar inspeção: ' + (resultado.erro || 'Falha no servidor.'));
+      throw new Error(resultado.erro || 'Falha ao salvar');
     }
+
   } catch (erro) {
-    console.error('Erro ao salvar inspeção:', erro);
-    alert('⚠️ Erro de conexão ao salvar inspeção!');
+    notificacao.erro('Erro ao Salvar', erro.message);
+    logger.registrarErro('gerarJSONeToken', erro.stack);
+
+    try {
+      const idRascunho = await offlineSync.salvarRascunhoInspecao(null, inspecao);
+      notificacao.aviso('Modo Offline', `Salvo localmente. ID: ${idRascunho}`);
+    } catch (erroOffline) {
+      logger.registrarErro('salvar_offline', erroOffline.stack);
+    }
+  } finally {
+    validadorInspecaoFOB.desabilitarDurante(false);
   }
 }
 
 // ============================================
-// ETAPA 3B: INSPEÇÃO CIF / FCA (32 ITENS)
+// ETAPA 3B: INSPEÇÃO CIF
 // ============================================
 
 async function salvarInspecaoCIF() {
+  const cpf = auth.obterCPFAtual();
+
   const getVal = (idCif, idPadrao) => {
-    const elCif = document.getElementById(idCif);
+    const elCif = id(idCif);
     if (elCif && elCif.value.trim() !== '') return elCif.value.trim();
     
-    const elPadrao = document.getElementById(idPadrao);
+    const elPadrao = id(idPadrao);
     if (elPadrao && elPadrao.value.trim() !== '') return elPadrao.value.trim();
     
     return '';
@@ -485,29 +566,24 @@ async function salvarInspecaoCIF() {
   const cnh = getVal('cif-cnh', 'cnh') || dadosMotoristaAtual?.cnh || '';
   const telefone = getVal('cif-telefone', 'telefone') || dadosMotoristaAtual?.telefone || '';
   const placa = (getVal('cif-placa', 'placa') || dadosMotoristaAtual?.placa || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-  const pedido = getVal('cif-pedido', 'pedido'); // Deve ser digitado obrigatoriamente
+  const pedido = getVal('cif-pedido', 'pedido');
   const eixos = getVal('cif-eixos', 'eixos') || ultimaInspecaoAtual?.eixos || '';
-  const tipoChecklist = document.getElementById('cif-tipo-checklist')?.value || '';
-  const segmento = document.getElementById('cif-segmento')?.value || '';
-  const observacoes = document.getElementById('cif-observacoes')?.value.trim() || '';
+  const tipoChecklist = id('cif-tipo-checklist')?.value || '';
+  const segmento = id('cif-segmento')?.value || '';
 
-  if (!nome || !cnh || !telefone || !placa || !pedido || !eixos) {
-    alert('⚠️ Preencha todos os dados básicos do motorista e veículo!');
+  // Validar campos
+  if (!validadorInspecaoCIF.validarFormulario()) {
+    validadorInspecaoCIF.mostrarResumoErros();
     return;
   }
 
-  if (!validarTelefone(telefone)) {
-    alert('❌ Telefone/WhatsApp inválido!');
-    return;
-  }
-
-  if (!validarPlaca(placa)) {
-    alert('❌ Placa do veículo inválida!');
+  if (!nome || !cnh) {
+    notificacao.aviso('Dados Incompletos', 'Preencha Nome e CNH!');
     return;
   }
 
   if (!tipoChecklist || !segmento) {
-    alert('⚠️ Selecione o Tipo de Checklist CIP e o Segmento!');
+    notificacao.aviso('Informações Obrigatórias', 'Selecione Tipo de Checklist CIP e Segmento!');
     return;
   }
 
@@ -521,15 +597,16 @@ async function salvarInspecaoCIF() {
     data: new Date().toLocaleDateString('pt-BR'),
     tipo_checklist: tipoChecklist,
     segmento: segmento,
-    observacoes: observacoes
+    observacoes: ''
   };
 
+  // Verificar 32 itens
   for (let i = 1; i <= 32; i++) {
-    const elItem = document.getElementById(`cif-item-${i}`);
+    const elItem = id(`cif-item-${i}`);
     const valorItem = elItem ? elItem.value : '';
 
     if (!valorItem) {
-      alert(`⚠️ Por favor, selecione uma resposta para o Item ${i}!`);
+      notificacao.aviso('Item Faltando', `Selecione resposta para o Item ${i}!`);
       return;
     }
 
@@ -537,53 +614,76 @@ async function salvarInspecaoCIF() {
   }
 
   try {
-    const response = await fetch(`${WORKER_URL}/api/salvar-inspecao-cif`, {
+    validadorInspecaoCIF.desabilitarDurante(true);
+    const toastCarregando = notificacao.carregando('Salvando inspeção CIF...');
+
+    const response = await auth.fazerRequisicaoSegura(`${WORKER_URL}/api/salvar-inspecao-cif`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        cpf: cpfAtual,
+        cpf,
         inspecao_dados: inspecaoDados
       })
     });
 
     const resultado = await response.json();
 
+    toastCarregando.remove();
+
     if (resultado.sucesso) {
-      const formCIF = document.getElementById('form-inspecao-cif');
-      if (formCIF) formCIF.reset();
+      await offlineSync.salvarRascunhoInspecao(`inspecao_cif_${resultado.id_inspecao}`, inspecaoDados);
 
-      const tokenEl = document.getElementById('token-gerado');
-      if (tokenEl) tokenEl.innerText = resultado.id_inspecao;
+      id('form-inspecao-cif').reset();
+      id('token-gerado').innerText = resultado.id_inspecao;
 
+      logger.registrarInspecao(cpf, 'CIF', resultado.id_inspecao, {
+        placa,
+        pedido,
+        tipo_checklist: tipoChecklist
+      });
+
+      notificacao.sucesso('Inspeção CIF Concluída! 🎉', `Código: ${resultado.id_inspecao}`);
       irParaSucesso();
     } else {
-      alert('❌ Erro ao salvar inspeção CIF: ' + (resultado.erro || 'Erro no servidor'));
+      throw new Error(resultado.erro || 'Falha ao salvar');
     }
+
   } catch (erro) {
-    console.error('Erro ao salvar CIF:', erro);
-    alert('⚠️ Erro de conexão ao salvar inspeção CIF!');
+    notificacao.erro('Erro ao Salvar CIF', erro.message);
+    logger.registrarErro('salvarInspecaoCIF', erro.stack);
+
+    try {
+      const idRascunho = await offlineSync.salvarRascunhoInspecao(null, inspecaoDados);
+      notificacao.aviso('Modo Offline', `Salvo localmente. ID: ${idRascunho}`);
+    } catch (erroOffline) {
+      logger.registrarErro('salvar_cif_offline', erroOffline.stack);
+    }
+  } finally {
+    validadorInspecaoCIF.desabilitarDurante(false);
   }
 }
 
 // ============================================
-// NAVEGAÇÃO E RESET
+// NAVEGAÇÃO
 // ============================================
 
 function copiarToken() {
-  const token = document.getElementById('token-gerado').innerText;
+  const token = id('token-gerado').innerText;
   navigator.clipboard.writeText(token).then(() => {
-    alert('📋 Código copiado com sucesso!');
+    notificacao.sucesso('Copiado!', 'Código copiado para a área de transferência');
+    logger.registrarAcao('token_copiado', `Token ${token} copiado`);
+  }).catch(() => {
+    notificacao.erro('Erro', 'Não foi possível copiar o código');
   });
 }
 
 function voltarPaginaAnterior() {
-  const etapaCarregamentoVisivel = !document.getElementById('step-tipo-carregamento').classList.contains('hidden');
-  const etapaInspecaoVisivel = !document.getElementById('step-inspecao').classList.contains('hidden');
-  const etapaInspecaoCIFVisivel = !document.getElementById('step-inspecao-cif').classList.contains('hidden');
+  const etapaCarregamento = !id('step-tipo-carregamento').classList.contains('hidden');
+  const etapaInspecao = !id('step-inspecao').classList.contains('hidden');
+  const etapaInspecaoCIF = !id('step-inspecao-cif').classList.contains('hidden');
 
-  if (etapaInspecaoVisivel || etapaInspecaoCIFVisivel) {
+  if (etapaInspecao || etapaInspecaoCIF) {
     irParaSelecaoCarregamento();
-  } else if (etapaCarregamentoVisivel && ehPrimeiraVez) {
+  } else if (etapaCarregamento && ehPrimeiraVez) {
     irParaIntegracao();
   } else {
     irParaCPF();
@@ -591,56 +691,45 @@ function voltarPaginaAnterior() {
 }
 
 function irParaCPF() {
+  logger.registrarLogout();
+  auth.logout();
   ocultarTodas();
 
-  const inputCPF = document.getElementById('input-cpf');
-  if (inputCPF) inputCPF.value = '';
+  validadorCPF?.resetar();
+  validadorIntegracao?.resetar();
+  validadorInspecaoFOB?.resetar();
+  validadorInspecaoCIF?.resetar();
 
-  const formProva = document.getElementById('form-prova');
-  if (formProva) formProva.reset();
-
-  const formInspecao = document.getElementById('form-inspecao');
-  if (formInspecao) formInspecao.reset();
-
-  const formCIF = document.getElementById('form-inspecao-cif');
-  if (formCIF) formCIF.reset();
-
-  ocultarQuantidadePaletes();
-  alternarBloqueioProva();
-
-  cpfAtual = '';
   dadosMotoristaAtual = {};
   ultimaInspecaoAtual = null;
   ehPrimeiraVez = false;
   tipoCarregamentoSelecionado = '';
 
-  document.getElementById('step-cpf').classList.remove('hidden');
+  id('step-cpf').classList.remove('hidden');
 }
 
 function irParaIntegracao() {
   ocultarTodas();
 
-  const formInspecao = document.getElementById('form-inspecao');
-  if (formInspecao) formInspecao.reset();
-
+  validadorIntegracao?.resetar();
   ocultarQuantidadePaletes();
   alternarBloqueioProva();
 
-  document.getElementById('step-integracao').classList.remove('hidden');
+  id('step-integracao').classList.remove('hidden');
 }
 
 function irParaInspecao() {
   ocultarTodas();
-  document.getElementById('step-inspecao').classList.remove('hidden');
+  validadorInspecaoFOB?.resetar();
+  id('step-inspecao').classList.remove('hidden');
   
-  // Puxa as informações preenchidas do último carregamento (exceto pedido)
   preencherUltimoCarregamento();
 }
 
 function irParaInspecaoCIF() {
   ocultarTodas();
+  validadorInspecaoCIF?.resetar();
 
-  // Puxa informações cadastradas para a inspeção CIF (exceto pedido)
   const nome = dadosMotoristaAtual?.nome || ultimaInspecaoAtual?.nome || '';
   const cnh = dadosMotoristaAtual?.cnh || ultimaInspecaoAtual?.cnh || '';
   const telefone = dadosMotoristaAtual?.telefone || ultimaInspecaoAtual?.telefone || '';
@@ -652,37 +741,40 @@ function irParaInspecaoCIF() {
   if (id('cif-telefone')) id('cif-telefone').value = telefone;
   if (id('cif-placa')) id('cif-placa').value = placa;
   if (id('cif-eixos')) id('cif-eixos').value = eixos;
-
-  // Deixa o pedido CIF limpo obrigatoriamente
   if (id('cif-pedido')) id('cif-pedido').value = '';
 
-  document.getElementById('step-inspecao-cif').classList.remove('hidden');
+  id('step-inspecao-cif').classList.remove('hidden');
 }
 
 function irParaSucesso() {
   ocultarTodas();
-  document.getElementById('step-sucesso').classList.remove('hidden');
+  id('step-sucesso').classList.remove('hidden');
 }
 
 function ocultarTodas() {
-  document.getElementById('step-cpf').classList.add('hidden');
-  document.getElementById('step-integracao').classList.add('hidden');
+  id('step-cpf').classList.add('hidden');
+  id('step-integracao').classList.add('hidden');
+  id('step-tipo-carregamento').classList.add('hidden');
+  id('step-inspecao').classList.add('hidden');
+  id('step-inspecao-cif').classList.add('hidden');
+  id('step-sucesso').classList.add('hidden');
 
-  const stepCarregamento = document.getElementById('step-tipo-carregamento');
-  if (stepCarregamento) stepCarregamento.classList.add('hidden');
-
-  document.getElementById('step-inspecao').classList.add('hidden');
-
-  const stepCIF = document.getElementById('step-inspecao-cif');
-  if (stepCIF) stepCIF.classList.add('hidden');
-
-  document.getElementById('step-sucesso').classList.add('hidden');
-
-  window.scrollTo({
-    top: 0,
-    left: 0,
-    behavior: 'smooth'
-  });
+  window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
 }
 
-document.addEventListener('DOMContentLoaded', irParaCPF);
+// ============================================
+// SINCRONIZAÇÃO PERIÓDICA
+// ============================================
+
+setInterval(() => {
+  if (auth.estaAutenticado()) {
+    offlineSync.sincronizarOperacoes();
+  }
+}, 60000);
+
+window.addEventListener('beforeunload', () => {
+  if (auth.estaAutenticado()) {
+    logger.registrarLogout();
+    auth.logout();
+  }
+});
