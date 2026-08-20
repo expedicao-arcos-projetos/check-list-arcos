@@ -10,9 +10,14 @@
 <body>
   <div class="container">
     
-    <!-- ETAPA 1: BUSCA CPF -->
-    <div class="card" id="step-cpf">
-      <h2>🚗 Acesso do Motorista</h2>
+  <!-- ETAPA 1: BUSCA CPF -->
+  <div class="card" id="step-cpf">
+    <h2>🚗 Acesso do Motorista</h2>
+    
+    <div class="input-group">
+      <label for="input-cpf">Informe seu CPF (somente números):</label>
+      <input type="text" id="input-cpf" placeholder="EX: 00000000000" maxlength="11" inputmode="numeric">
+    </div>
       
       <form id="form-cpf-busca" onsubmit="event.preventDefault(); verificarAcesso();">
         <div class="input-group">
