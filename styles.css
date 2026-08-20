@@ -609,3 +609,38 @@ select:focus {
 .card-carregamento input[type="radio"]:checked + .conteudo-carregamento h3 {
   color: #15803d;
 }
+
+/* ========== FEEDBACK VISUAL DE VALIDAÇÃO (SEM POPUP) ========== */
+.input-group {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.input-group.has-error input,
+.input-group.has-error select {
+  border-color: #dc3545 !important;
+  background-color: #fff5f5 !important;
+}
+
+.form-feedback {
+  margin-top: 6px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: slideInFeedback 0.2s ease-out;
+}
+
+.form-feedback.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border-left: 4px solid #dc3545;
+}
+
+@keyframes slideInFeedback {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
