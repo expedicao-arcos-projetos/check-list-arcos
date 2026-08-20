@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Inspeção Veicular</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    
+    <!-- ETAPA 1: BUSCA CPF -->
+    <div class="card" id="step-cpf">
+      <h2>🚗 Acesso do Motorista</h2>
+      
+      <label for="input-cpf">Informe seu CPF (somente números):</label>
+      <input type="text" id="input-cpf" placeholder="EX: 00000000000" maxlength="11" inputmode="numeric">
+   
+      <!-- INFORMATIVO LGPD -->
+      <details class="accordion-termo" style="margin-bottom: 20px;">
+        <summary>ℹ️ Aviso de Privacidade & LGPD (Lei nº 13.709/2018)</summary>
+        <div class="termo-box">
+          <p><strong>Tratamento Transparente de Dados Pessoais:</strong></p>
+          <p>Este sistema coleta dados exclusivamente para fins de segurança operacional, controle de acesso e emissão de checklists de inspeção veicular.</p>
+          <p><strong>📌 Dados Coletados:</strong></p>
+          <ul>
+            <li>CPF, Nome, RG e Telefone (Identificação do motorista);</li>
+            <li>CNH, Placa, Pedido e Eixos (Identificação e conformidade veicular).</li>
+          </ul>
+          <p><strong>🔒 Segurança e Retenção:</strong></p>
+          <p>Seus dados são armazenados de forma segura e criptografada. Não compartilhamos suas informações para fins comerciais. Para o primeiro acesso, será necessário o aceite dos termos regulamentares.</p>
+        </div>
+      </details>
+
+      <button type="button" class="btn" onclick="verificarAcesso()">Continuar</button>
+    </div>
+    
+    <!-- ETAPA 2: INTEGRAÇÃO (1º Acesso) -->
+    <div class="card hidden" id="step-integracao">
+      <button type="button" class="btn-voltar" onclick="voltarPaginaAnterior()">⬅️ Voltar</button>
+      <h2>📋 1º Acesso: Cadastro, Vídeo & Prova</h2>     
+      
+      <form id="form-prova">
+        <h3>Dados de Cadastro do Motorista</h3>
+        
+        <label for="reg-nome">Nome Completo:</label>
+        <input type="text" id="reg-nome" placeholder="Digite seu nome completo" required>
+    
+        <label for="reg-rg">RG:</label>
+        <input type="text" id="reg-rg" placeholder="EX: 000000000" required>
+    
+        <label for="reg-telefone">Telefone de Contato 'WHATSAPP' (com DDD):</label>
+        <input type="text" id="reg-telefone" placeholder="EX: 11999999999" maxlength="11" inputmode="numeric" required>
+    
+        <label for="reg-placa">Placa do Cavalo:</label>
+        <input type="text" id="reg-placa" placeholder="EX: ABC1234 ou ABC1A34" maxlength="7" style="text-transform: uppercase;" required>    
+        
+        <!-- ETAPA DO VÍDEO OBRIGATÓRIO -->
+        <div class="regras-container" style="border-left-color: #ff9800; background: #fff8e1; margin-top: 20px;">
+          <p style="font-weight: bold; color: #b71c1c; font-size: 15px;">📹 ATENÇÃO: VÍDEO DE INTEGRAÇÃO</p>
+          <p>Antes de iniciar a prova você deve solicitar ao Auxiliar da CSN Cimentos para que apresente o <strong>"VÍDEO DE INTRODUÇÃO ÀS NORMAS DA CSN"</strong>, para que depois responda às perguntas.</p>
+        </div>
+    
+        <div class="aceite-container">
+          <label class="aceite-label">
+            <input type="checkbox" id="aceite-video" onchange="alternarBloqueioProva()" required>
+            <span>Confirmo que assisti ao vídeo de integração.</span>
+          </label>
+        </div>
+    
+        <!-- SEÇÃO DA PROVA -->
+        <div id="secao-prova" style="opacity: 0.5; pointer-events: none; transition: opacity 0.3s ease;">
+          <h3>📝 Prova de Conhecimento</h3>
+          <p><em>Você precisa acertar TODAS as questões para continuar. Boa sorte! 🍀</em></p>
+          
+          <!-- QUESTÃO 1 -->
+          <div class="radio-group">
+            <p><strong>1. Regra em Pátio: Ao estacionar o caminhão ao calçar as rodas, o calço deve ser de qual material?</strong></p>
+            <input type="radio" id="q1-a" name="q1" value="Borracha">
+            <label for="q1-a">Borracha</label><br>
+            <input type="radio" id="q1-b" name="q1" value="Madeira">
+            <label for="q1-b">Madeira</label><br>
+            <input type="radio" id="q1-c" name="q1" value="Plástico">
+            <label for="q1-c">Plástico</label><br>
+            <input type="radio" id="q1-d" name="q1" value="Lata">
+            <label for="q1-d">Lata</label>
+          </div>
+          
+          <!-- QUESTÃO 2 -->
+          <div class="radio-group">
+            <p><strong>2. Inspeção de Veículos: Em que dia da semana é feita a inspeção veicular?</strong></p>
+            <input type="radio" id="q2-a" name="q2" value="Segunda-Feira">
+            <label for="q2-a">Segunda-Feira</label><br>
+            <input type="radio" id="q2-b" name="q2" value="Quinta-Feira">
+            <label for="q2-b">Quinta-Feira</label><br>
+            <input type="radio" id="q2-c" name="q2" value="Todos os dias">
+            <label for="q2-c">Todos os dias</label><br>
+            <input type="radio" id="q2-d" name="q2" value="Terça-Feira">
+            <label for="q2-d">Terça-Feira</label>
+          </div>
+          
+          <!-- QUESTÃO 3 -->
+          <div class="radio-group">
+            <p><strong>3. Emergência: Em caso de emergência na unidade CSN CIMENTOS, ao ouvir a sirene o que devemos fazer?</strong></p>
+            <input type="radio" id="q3-a" name="q3" value="Sair correndo">
+            <label for="q3-a">Sair correndo</label><br>
+            <input type="radio" id="q3-b" name="q3" value="Entrar no caminhão">
+            <label for="q3-b">Entrar no caminhão</label><br>
+            <input type="radio" id="q3-c" name="q3" value="Ir para um ponto mais próximo indicado pela brigada de emergência">
+            <label for="q3-c">Ir para um ponto mais próximo indicado pela brigada de emergência</label><br>
+            <input type="radio" id="q3-d" name="q3" value="Ficar parado">
+            <label for="q3-d">Ficar parado</label>
+          </div>
+          
+          <!-- QUESTÃO 4 -->
+          <div class="radio-group">
+            <p><strong>4. Enlonamento/Desenlonamento: No que se diz respeito ao enlonamento/desenlonamento, onde ficará a chave do veículo?</strong></p>
+            <input type="radio" id="q4-a" name="q4" value="Com o motorista">
+            <label for="q4-a">Com o motorista</label><br>
+            <input type="radio" id="q4-b" name="q4" value="Bloqueada pelo responsável CSN CIMENTOS.">
+            <label for="q4-b">Bloqueada pelo responsável CSN CIMENTOS.</label><br>
+            <input type="radio" id="q4-c" name="q4" value="Dentro do caminhão">
+            <label for="q4-c">Dentro do caminhão</label><br>
+            <input type="radio" id="q4-d" name="q4" value="Na expedição">
+            <label for="q4-d">Na expedição</label>
+          </div>
+        </div>
+    
+        <!-- TERMOS E ACEITES -->
+        <h3 style="margin-top: 30px;">📜 Termos e Aceites Regulamentares</h3>
+        
+        <details class="accordion-termo">
+          <summary>📜 1. Termo de Adesão ao PPAE (Álcool e Entorpecentes)</summary>
+          <div class="termo-box">
+            <p><strong>Programa de Prevenção para Álcool e Entorpecentes – PPAE</strong></p>
+            <p>Recebi o treinamento referente ao PPAE e declaro conhecer e aceitar integralmente as normas.</p>
+          </div>
+        </details>
+        
+        <div class="aceite-container">
+          <label class="aceite-label">
+            <input type="checkbox" id="aceite-ppae" required>
+            <span>Li e estou de acordo com o Termo de Adesão ao PPAE.</span>
+          </label>
+        </div>
+        
+        <details class="accordion-termo">
+          <summary>📜 2. Termo de Compromisso de Saúde e Segurança (CSN Cimentos)</summary>
+          <div class="termo-box">
+            <p>Declaro que assumo o compromisso de seguir todas as orientações de segurança operacional.</p>
+          </div>
+        </details>
+        
+        <div class="aceite-container">
+          <label class="aceite-label">
+            <input type="checkbox" id="aceite-fob" required>
+            <span>Li e estou de acordo com o Termo de Compromisso de Saúde e Segurança.</span>
+          </label>
+        </div>
+    
+        <details class="accordion-termo">
+          <summary>📜 3. Política de Privacidade e Proteção de Dados (LGPD)</summary>
+          <div class="termo-box">
+            <p>Concordo com o tratamento dos meus dados pessoais exclusivamente para fins de segurança e identificação veicular.</p>
+          </div>
+        </details>
+        
+        <div class="aceite-container">
+          <label class="aceite-label">
+            <input type="checkbox" id="aceite-lgpd" required>
+            <span>Li e estou de acordo com a Política de Privacidade e Proteção de Dados (LGPD).</span>
+          </label>
+        </div>
+
+        <button type="button" class="btn" onclick="concluirIntegracao()">✅ Concluir Prova, Aceites e Avançar</button>
+      </form>
+    </div>
+
+    <!-- ETAPA: SELEÇÃO DO TIPO DE CARREGAMENTO -->
+    <div class="card hidden" id="step-tipo-carregamento">
+      <button type="button" class="btn-voltar" onclick="voltarPaginaAnterior()">⬅️ Voltar</button>
+      <h2>🚛 Selecione o Tipo de Carregamento</h2>
+      <p style="margin-bottom: 20px; color: #555;">Escolha qual o modelo da sua operação para abrir a inspeção correta:</p>
+
+      <div class="tipo-carregamento-opcoes">
+        <!-- OPÇÃO 1: FOB - CLIENTE -->
+        <label class="card-carregamento">
+          <input type="radio" name="modelo_carregamento" value="FOB">
+          <div class="conteudo-carregamento">
+            <h3>📦 FOB - Cliente</h3>
+            <p class="subtexto-exemplo">Exemplo de pedido: <strong>9999999</strong></p>
+          </div>
+        </label>
+
+        <!-- OPÇÃO 2: TRANSFERÊNCIA / CIF -->
+        <label class="card-carregamento">
+          <input type="radio" name="modelo_carregamento" value="CIF">
+          <div class="conteudo-carregamento">
+            <h3>🚚 TRANSFERÊNCIA / CIF</h3>
+            <p class="subtexto-transportadoras">Transportadoras: <strong>Targets / Tora / TransAgil</strong></p>
+            <p class="subtexto-exemplo">Exemplo de pedido: <strong>104000000</strong></p>
+          </div>
+        </label>
+      </div>
+
+      <button type="button" class="btn" onclick="confirmarTipoCarregamento()" style="margin-top: 25px;">Avançar para Inspeção ➡️</button>
+    </div>
+    
+    <!-- ETAPA 3A: FORMULÁRIO DE INSPEÇÃO (FOB) -->
+    <div class="card hidden" id="step-inspecao">
+      <button type="button" class="btn-voltar" onclick="voltarPaginaAnterior()">⬅️ Voltar</button>
+      <h2>🔍 Formulário de Inspeção Veicular (FOB)</h2>     
+      
+      <form id="form-inspecao">
+        <label for="nome">Nome Completo:</label>
+        <input type="text" id="nome" placeholder="EX: João da Silva" required>
+    
+        <div class="form-group-cnh">
+          <label for="cnh">CNH:</label>
+          <input type="text" id="cnh" placeholder="00000000000" maxlength="11" inputmode="numeric" required>
+        
+          <details class="helper-cnh">
+            <summary>🔍 Clique aqui para ver onde fica o número da CNH</summary>
+            <div class="helper-cnh-img">
+              <img src="arquivos/Sem título.jpg" alt="Localização do número da CNH" loading="lazy">
+            </div>
+          </details>
+        </div>        
+        
+        <label for="telefone">Telefone de Contato 'WHATSAPP' (com DDD):</label>
+        <input type="text" id="telefone" placeholder="EX: 11999999999" maxlength="11" inputmode="numeric" required>
+
+        <label for="placa">Placa do Veículo (Cavalo):</label>
+        <input type="text" id="placa" placeholder="EX: ABC1234 ou ABC1A34" maxlength="7" style="text-transform: uppercase;" required>    
+        
+        <label for="pedido">Nº do Pedido:</label>
+        <input type="text" id="pedido" placeholder="EX: 8900000" maxlength="8" inputmode="numeric" required>                
+        
+        <label for="eixos">Quantidade total de eixos:</label>
+        <input type="text" id="eixos" placeholder="EX: 3 (máx. 9)" maxlength="1" inputmode="numeric" required>
+        
+        <!-- SELEÇÃO DO TIPO DE VEÍCULO -->
+        <h3>🚛 Seleção do Tipo de Veículo</h3>
+        <div class="tipo-veiculo-container">
+          <p style="font-weight: 600; margin-bottom: 12px; color: #333;">Seu veículo é:</p>
+        
+          <div class="tipo-veiculo-opcoes">
+            <label class="card-tipo-veiculo">
+              <input type="radio" name="tipo_veiculo" value="CARGA_SECA" required>
+              <div class="conteudo-tipo">
+                <img src="arquivos/carga_seca.png" alt="Carga Seca (PALETIZADO)">
+                <span>Carga Seca (PALETIZADO)</span>
+              </div>
+            </label>
+        
+            <label class="card-tipo-veiculo">
+              <input type="radio" name="tipo_veiculo" value="CARRETA_SILO" required>
+              <div class="conteudo-tipo">
+                <img src="arquivos/carreta_silo.png" alt="Carreta Silo (POTE / GRANEL)">
+                <span>Carreta Silo (POTE / GRANEL)</span>
+              </div>
+            </label>
+          </div>
+        </div>
+        
+        <!-- ITENS DE INSPEÇÃO -->
+        <h3>Itens de Inspeção Veicular</h3>
+    
+        <div class="item-check">
+          <span>🛑 Sinalização (Placa visível / Faixas refletivas):</span>
+          <select id="sinalizacao" required>
+            <option value="">-- Selecione --</option>
+            <option value="CONFORME">Conforme ✅</option>
+            <option value="NAO_CONFORME">Não Conforme ❌</option>
+          </select>
+        </div>
+    
+        <div class="item-check">
+          <span>🛞 Pneus (sem bolhas/cortes/careca):</span>
+          <select id="pneus" required>
+            <option value="">-- Selecione --</option>
+            <option value="CONFORME">Conforme ✅</option>
+            <option value="NAO_CONFORME">Não Conforme ❌</option>
+          </select>
+        </div>
+    
+        <div class="item-check">
+          <span>📦 Carroceria (sem falhas na forração):</span>
+          <select id="carroceria" required>
+            <option value="">-- Selecione --</option>
+            <option value="CONFORME">Conforme ✅</option>
+            <option value="NAO_CONFORME">Não Conforme ❌</option>
+          </select>
+        </div>
+    
+        <div class="item-check">
+          <span>🔗 Cinto de Segurança em bom estado:</span>
+          <select id="cinto" required>
+            <option value="">-- Selecione --</option>
+            <option value="CONFORME">Conforme ✅</option>
+            <option value="NAO_CONFORME">Não Conforme ❌</option>
+          </select>
+        </div>
+    
+        <div class="item-check">
+          <span>💡 Faróis funcionando:</span>
+          <select id="farois" required>
+            <option value="">-- Selecione --</option>
+            <option value="CONFORME">Conforme ✅</option>
+            <option value="NAO_CONFORME">Não Conforme ❌</option>
+          </select>
+        </div>
+    
+        <div class="item-check">
+          <span>🔔 Alarme de Ré operando:</span>
+          <select id="alarme_re" required>
+            <option value="">-- Selecione --</option>
+            <option value="CONFORME">Conforme ✅</option>
+            <option value="NAO_CONFORME">Não Conforme ❌</option>
+          </select>
+        </div>
+    
+        <div class="item-check">
+          <span>💧 Vazamentos (Óleo/Água/Combustível):</span>
+          <select id="vazamentos" required>
+            <option value="">-- Selecione --</option>
+            <option value="SEM_VAZAMENTO">Sem Vazamento ✅</option>
+            <option value="COM_VAZAMENTO">Com Vazamento ❌</option>
+          </select>
+        </div>
+    
+        <div class="item-check">
+          <span>🪵 Par de Calços de Roda presente:</span>
+          <select id="calcos" required>
+            <option value="">-- Selecione --</option>
+            <option value="CONFORME">Conforme ✅</option>
+            <option value="NAO_CONFORME">Não Conforme ❌</option>
+          </select>
+        </div>
+    
+        <div class="item-check" id="container-tampa-silo">
+          <span>⚙️ Tampa Silo (Carreta Granel / Pote):</span>
+          <select id="tampa_silo" required>
+            <option value="">-- Selecione --</option>
+            <option value="CONFORME">Conforme ✅</option>
+            <option value="NAO_CONFORME">Não Conforme ❌</option>
+          </select>
+        </div>    
+        
+        <!-- EPIs -->
+        <h3>🪖 Equipamentos de Proteção Individual (EPIs)</h3>
+        
+        <div class="item-check">
+          <span>🪖 Capacete de Segurança:</span>
+          <select id="epi_capacete" required>
+            <option value="">-- Selecione --</option>
+            <option value="CONFORME">Possui/Em Uso ✅</option>
+            <option value="NAO_CONFORME">Não Possui ❌</option>
+          </select>
+        </div>
+    
+        <div class="item-check">
+          <span>🦺 Colete Refletivo:</span>
+          <select id="epi_colete" required>
+            <option value="">-- Selecione --</option>
+            <option value="CONFORME">Possui/Em Uso ✅</option>
+            <option value="NAO_CONFORME">Não Possui ❌</option>
+          </select>
+        </div>
+    
+        <div class="item-check">
+          <span>🥽 Óculos de Proteção:</span>
+          <select id="epi_oculos" required>
+            <option value="">-- Selecione --</option>
+            <option value="CONFORME">Possui/Em Uso ✅</option>
+            <option value="NAO_CONFORME">Não Possui ❌</option>
+          </select>
+        </div>
+    
+        <div class="item-check">
+          <span>🥾 Botina de Segurança:</span>
+          <select id="epi_botina" required>
+            <option value="">-- Selecione --</option>
+            <option value="CONFORME">Possui/Em Uso ✅</option>
+            <option value="NAO_CONFORME">Não Possui ❌</option>
+          </select>
+        </div>
+    
+        <div class="item-check">
+          <span>🧤 Luvas de Proteção:</span>
+          <select id="epi_luvas" required>
+            <option value="">-- Selecione --</option>
+            <option value="CONFORME">Possui/Em Uso ✅</option>
+            <option value="NAO_CONFORME">Não Possui ❌</option>
+          </select>
+        </div>
+    
+        <!-- PALETES -->
+        <div id="secao-paletes">
+          <h3>📦 Paletes</h3>
+          <div class="paletes-container" id="container-paletes">
+            <p style="font-weight: 600; margin-bottom: 15px;">Trouxe Paletes para Carregamento?</p>
+            
+            <div class="paletes-opcoes">
+              <label class="paletes-label">
+                <input type="radio" name="paletes_opcao" value="SIM" onchange="mostrarQuantidadePaletes()">
+                <span>SIM</span>
+              </label>
+              <div id="quantidade-paletes-container" style="display: none; margin-left: 20px; margin-bottom: 10px;">
+                <label for="quantidade-paletes">Quantidade:</label>
+                <input type="number" id="quantidade-paletes" placeholder="0" min="0" max="999">
+              </div>
+            </div>
+        
+            <div class="paletes-opcoes">
+              <label class="paletes-label">
+                <input type="radio" name="paletes_opcao" value="NAO" onchange="ocultarQuantidadePaletes()">
+                <span>NÃO</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn" onclick="gerarJSONeToken()" style="margin-top: 20px;">✅ Finalizar Inspeção FOB</button>
+      </form>
+    </div>
+
+    <!-- ETAPA 3B: FORMULÁRIO DE INSPEÇÃO (CIF / FCA - 32 ITENS) -->
+    <div class="card hidden" id="step-inspecao-cif">
+      <button type="button" class="btn-voltar" onclick="voltarPaginaAnterior()">⬅️ Voltar</button>
+      <h2>📋 Inspeção Veicular - CIF / FCA</h2>
+    
+      <form id="form-inspecao-cif">
+        <!-- DADOS DO MOTORISTA -->
+        <h3>👤 Dados do Motorista e Veículo</h3>
+        
+        <label for="cif-nome">Nome Completo:</label>
+        <input type="text" id="cif-nome" placeholder="EX: João da Silva" required>
+    
+        <div class="form-group-cnh">
+          <label for="cif-cnh">CNH:</label>
+          <input type="text" id="cif-cnh" placeholder="00000000000" maxlength="11" inputmode="numeric" required>
+        </div>
+    
+        <label for="cif-telefone">Telefone de Contato 'WHATSAPP' (com DDD):</label>
+        <input type="text" id="cif-telefone" placeholder="EX: 11999999999" maxlength="11" inputmode="numeric" required>
+    
+        <label for="cif-placa">Placa do Veículo (Cavalo):</label>
+        <input type="text" id="cif-placa" placeholder="EX: ABC1234 ou ABC1A34" maxlength="7" style="text-transform: uppercase;" required>
+    
+        <label for="cif-pedido">Nº do Pedido:</label>
+        <input type="text" id="cif-pedido" placeholder="EX: 104000000" maxlength="9" inputmode="numeric" required>
+    
+        <label for="cif-eixos">Quantidade total de eixos:</label>
+        <input type="text" id="cif-eixos" placeholder="EX: 3 (máx. 9)" maxlength="1" inputmode="numeric" required>
+    
+        <!-- TIPO DE CARGA E SEGMENTO -->
+        <h3>📌 Tipo de Carga e Segmento</h3>
+        <label for="cif-tipo-checklist">Checklist CIP:</label>
+        <select id="cif-tipo-checklist" required>
+          <option value="">-- Selecione --</option>
+          <option value="Cimento">Cimento</option>
+          <option value="Revalora">Revalora</option>
+          <option value="Agregados">Agregados</option>
+          <option value="Materias Primas">Matérias Primas</option>
+        </select>
+    
+        <label for="cif-segmento">Segmento:</label>
+        <select id="cif-segmento" required>
+          <option value="">-- Selecione --</option>
+          <option value="Transportador">Transportador</option>
+          <option value="Autonomo">Autônomo</option>
+        </select>
+    
+        <h3>🔍 Check List de Verificação (32 Itens)</h3>
+
+        <!-- OS 32 ITENS CONFORME ANEXO PDF -->
+        <div class="item-check"><span>1. Pneus (sem bolhas, rasgos, sulco >= 1,6mm):</span><select id="cif-item-1" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>2. Espelhos retrovisores em bom estado/visibilidade:</span><select id="cif-item-2" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>3. Placas de identificação legíveis e selo intacto:</span><select id="cif-item-3" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>4. Para-brisa sem trincas/fraturas na área de visão:</span><select id="cif-item-4" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>5. Cone de segurança (Laranja, 2 faixas, alt. min 70cm):</span><select id="cif-item-5" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>6. Extintor de incêndio pó ABC válido e com lacre:</span><select id="cif-item-6" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>7. Cinto de segurança retrátil 3 pontos em bom estado:</span><select id="cif-item-7" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>8. Tacógrafo lacrado, funcional e com disco correto:</span><select id="cif-item-8" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>9. Travas da báscula e pistão sem vazamentos:</span><select id="cif-item-9" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>10. Limpador de para-brisa e esguicho operantes:</span><select id="cif-item-10" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>11. Quebra-sol interno em bom estado:</span><select id="cif-item-11" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>12. Assoalho, cabine, assento e escada seguros:</span><select id="cif-item-12" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>13. Faróis alto e baixo sem mau funcionamento:</span><select id="cif-item-13" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>14. Portas, capô e carroceria sem avarias graves:</span><select id="cif-item-14" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>15. Sistema de sinalização completo (buzina, luzes, ré):</span><select id="cif-item-15" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>16. Suporte para mangueiras (Granel) em bom estado:</span><select id="cif-item-16" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>17. Ausência de peças/ferramentas soltas:</span><select id="cif-item-17" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>18. Faixas retrorefletivas em bom estado e limpas:</span><select id="cif-item-18" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>19. Par de calços amarelos de borracha amarrados:</span><select id="cif-item-19" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>20. Sem vazamento contínuo de fluidos (óleo/combustível):</span><select id="cif-item-20" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>21. Protetor lateral (barra anti-ciclista) presente:</span><select id="cif-item-21" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>22. Chassi do veículo em boas condições (sem trincas/soldas):</span><select id="cif-item-22" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>23. Suspensão sem adulterações/arqueamentos irregulares:</span><select id="cif-item-23" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>24. Sistema pneumático sem vazamento de ar:</span><select id="cif-item-24" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>25. Freio de estacionamento/manete operacional:</span><select id="cif-item-25" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>26. Motorista com todos os EPIs necessários:</span><select id="cif-item-26" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>27. Possui checklist da tampa do silo:</span><select id="cif-item-27" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>28. Cabo anti-chicoteamento presente e conservado:</span><select id="cif-item-28" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>29. Película dos vidros (Insulfilm) conforme legislação:</span><select id="cif-item-29" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>30. Sem alterações/adulterações nas características originais:</span><select id="cif-item-30" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>31. Protetor das partes rotativas do compressor presente:</span><select id="cif-item-31" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+        <div class="item-check"><span>32. Cintas e cordas em bom estado (sem cortes/avarias):</span><select id="cif-item-32" required><option value="">-- Selecione --</option><option value="SIM">SIM ✅</option><option value="NAO">NÃO ❌</option><option value="NA">N/A</option></select></div>
+
+        <button type="button" class="btn" onclick="salvarInspecaoCIF()" style="margin-top: 20px;">✅ Finalizar Inspeção CIF / FCA</button>
+      </form>
+    </div>
+
+    <!-- ETAPA 4: TELA FINAL / SUCESSO -->
+    <div class="card hidden" id="step-sucesso" style="text-align: center;">
+      <h2>🎉 Inspeção Concluída!</h2>
+      <p>A inspeção foi registrada com sucesso no sistema.</p>
+      
+      <div style="background: #f8f9fa; border: 2px dashed #667eea; padding: 20px; margin: 20px 0; border-radius: 8px;">
+        <span style="font-size: 14px; color: #555; font-weight: 600; display: block; margin-bottom: 5px;">CÓDIGO DA INSPEÇÃO (TOKEN):</span>
+        <h1 id="token-gerado" style="font-size: 32px; color: #667eea; margin: 0; letter-spacing: 2px; font-weight: bold;">---</h1>
+      </div>
+
+      <button type="button" class="btn" onclick="copiarToken()" style="background: #28a745; margin-bottom: 10px;">📋 Copiar Código</button>
+      <button type="button" class="btn" onclick="irParaCPF()" style="background: #6c757d;">🔄 Realizar Nova Inspeção</button>
+    </div>
+
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
