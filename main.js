@@ -179,22 +179,18 @@ function confirmarTipoCarregamento() {
   if (opcao === 'FOB') {
     const pedidoFob = id('pedido-fob-input')?.value.trim();
     if (!validarPedido(pedidoFob)) {
-      mostrarErroInline('pedido-fob-input', 'Digite um número de pedido FOB válido!');
+      mostrarErroInline('pedido-fob-input', 'Digite um número de pedido FOB válido (mínimo 6 dígitos)!');
       return;
     }
-    // Repassa o pedido digitado para o formulário FOB principal
-    if (id('pedido')) id('pedido').value = pedidoFob;
-    irParaInspecao();
+    irParaInspecao(pedidoFob);
 
   } else if (opcao === 'CIF') {
     const pedidoCif = id('pedido-cif-input')?.value.trim();
     if (!validarPedido(pedidoCif)) {
-      mostrarErroInline('pedido-cif-input', 'Digite um número de pedido CIF/Transferência válido!');
+      mostrarErroInline('pedido-cif-input', 'Digite um número de pedido CIF/Transferência válido (mínimo 6 dígitos)!');
       return;
     }
-    // Repassa o pedido digitado para o formulário CIF principal
-    if (id('cif-pedido')) id('cif-pedido').value = pedidoCif;
-    irParaInspecaoCIF();
+    irParaInspecaoCIF(pedidoCif);
   }
 }
 
@@ -634,15 +630,21 @@ function irParaIntegracao() {
   id('step-integracao').classList.remove('hidden');
 }
 
-function irParaInspecao() {
+function irParaInspecao(numeroPedido) {
   ocultarTodas();
   limparTodosErros();
 
   id('step-inspecao').classList.remove('hidden');
   preencherUltimoCarregamento();
+
+  // Preenche o pedido vindo da seleção com trava de edição (opcional)
+  if (numeroPedido && id('pedido')) {
+    id('pedido').value = numeroPedido;
+    id('pedido').readOnly = true; // Impede alterar o pedido já validado
+  }
 }
 
-function irParaInspecaoCIF() {
+function irParaInspecaoCIF(numeroPedido) {
   ocultarTodas();
   limparTodosErros();
 
@@ -657,7 +659,12 @@ function irParaInspecaoCIF() {
   if (id('cif-telefone')) id('cif-telefone').value = telefone;
   if (id('cif-placa')) id('cif-placa').value = placa;
   if (id('cif-eixos')) id('cif-eixos').value = eixos;
-  if (id('cif-pedido')) id('cif-pedido').value = '';
+
+  // Preenche o pedido CIF vindo da seleção
+  if (numeroPedido && id('cif-pedido')) {
+    id('cif-pedido').value = numeroPedido;
+    id('cif-pedido').readOnly = true; // Impede alterar o pedido já validado
+  }
 
   id('step-inspecao-cif').classList.remove('hidden');
 }
