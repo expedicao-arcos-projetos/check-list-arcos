@@ -10,19 +10,14 @@
 <body>
   <div class="container">
     
-  <!-- ETAPA 1: BUSCA CPF -->
-  <div class="card" id="step-cpf">
-    <h2>🚗 Acesso do Motorista</h2>
-    
-    <div class="input-group">
-      <label for="input-cpf">Informe seu CPF (somente números):</label>
-      <input type="text" id="input-cpf" placeholder="EX: 00000000000" maxlength="11" inputmode="numeric">
-    </div>
+    <!-- ETAPA 1: BUSCA CPF -->
+    <div class="card" id="step-cpf">
+      <h2>🚗 Acesso do Motorista</h2>
       
       <form id="form-cpf-busca" onsubmit="event.preventDefault(); verificarAcesso();">
         <div class="input-group">
           <label for="input-cpf">Informe seu CPF (somente números):</label>
-          <input type="text" id="input-cpf" placeholder="EX: 00000000000" maxlength="11" inputmode="numeric">
+          <input type="text" id="input-cpf" placeholder="EX: 00000000000" maxlength="11" inputmode="numeric" required>
         </div>
 
         <!-- INFORMATIVO LGPD -->
@@ -259,7 +254,7 @@
 
         <div class="input-group">
           <label for="pedido">Nº do Pedido:</label>
-          <input type="text" id="pedido" placeholder="EX: 8900000" maxlength="8" inputmode="numeric" required>               
+          <input type="text" id="pedido" placeholder="EX: 8900000" maxlength="8" inputmode="numeric" required>                
         </div>
 
         <div class="input-group">
@@ -372,6 +367,7 @@
             <option value="">-- Selecione --</option>
             <option value="CONFORME">Conforme ✅</option>
             <option value="NAO_CONFORME">Não Conforme ❌</option>
+            <option value="NA">N/A</option>
           </select>
         </div>    
         
@@ -570,8 +566,6 @@
 
   </div>
 
-  <!-- INCLUSÃO DOS SCRIPTS EM ORDEM CORRETA DE CARREGAMENTO -->
-  <script src="form-validator.js"></script>
   <script src="main.js"></script>
 </body>
 </html>
