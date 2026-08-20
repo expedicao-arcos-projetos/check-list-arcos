@@ -193,29 +193,39 @@
     <div class="card hidden" id="step-tipo-carregamento">
       <button type="button" class="btn-voltar" onclick="voltarPaginaAnterior()">⬅️ Voltar</button>
       <h2>🚛 Selecione o Tipo de Carregamento</h2>
-      <p style="margin-bottom: 20px; color: #555;">Escolha qual o modelo da sua operação para abrir a inspeção correta:</p>
-
+      <p style="margin-bottom: 20px; color: #555;">Escolha o modelo da sua operação e informe o número do pedido:</p>
+    
       <div class="tipo-carregamento-opcoes">
         <!-- OPÇÃO 1: FOB - CLIENTE -->
         <label class="card-carregamento">
-          <input type="radio" name="modelo_carregamento" value="FOB">
+          <input type="radio" name="modelo_carregamento" value="FOB" onchange="alternarCamposPedido()">
           <div class="conteudo-carregamento">
             <h3>📦 FOB - Cliente</h3>
-            <p class="subtexto-exemplo">Exemplo de pedido: <strong>9999999</strong></p>
           </div>
         </label>
-
+        
+        <!-- CAMPO PEDIDO FOB -->
+        <div id="container-pedido-fob" class="input-group" style="display: none; margin-top: -5px; padding: 10px; background: #f8fafc; border-radius: 8px; border: 1px solid #cbd5e1;">
+          <label for="pedido-fob-input" style="margin-top: 0;">Digite o número do pedido FOB:</label>
+          <input type="text" id="pedido-fob-input" placeholder="Exemplo de pedido: 9999999" maxlength="8" inputmode="numeric">
+        </div>
+    
         <!-- OPÇÃO 2: TRANSFERÊNCIA / CIF -->
         <label class="card-carregamento">
-          <input type="radio" name="modelo_carregamento" value="CIF">
+          <input type="radio" name="modelo_carregamento" value="CIF" onchange="alternarCamposPedido()">
           <div class="conteudo-carregamento">
             <h3>🚚 TRANSFERÊNCIA / CIF</h3>
             <p class="subtexto-transportadoras">Transportadoras: <strong>Targets / Tora / TransAgil</strong></p>
-            <p class="subtexto-exemplo">Exemplo de pedido: <strong>104000000</strong></p>
           </div>
         </label>
+    
+        <!-- CAMPO PEDIDO CIF -->
+        <div id="container-pedido-cif" class="input-group" style="display: none; margin-top: -5px; padding: 10px; background: #f8fafc; border-radius: 8px; border: 1px solid #cbd5e1;">
+          <label for="pedido-cif-input" style="margin-top: 0;">Digite o número do pedido CIF/Transferência:</label>
+          <input type="text" id="pedido-cif-input" placeholder="Exemplo de pedido: 104000000" maxlength="9" inputmode="numeric">
+        </div>
       </div>
-
+    
       <button type="button" class="btn" onclick="confirmarTipoCarregamento()" style="margin-top: 25px;">Avançar para Inspeção ➡️</button>
     </div>
     
