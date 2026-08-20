@@ -66,6 +66,7 @@ function limparTodosErros() {
 // Remove o erro automaticamente ao digitar ou alterar
 document.addEventListener('input', (e) => { if (e.target.id) removerErroInline(e.target.id); });
 document.addEventListener('change', (e) => { if (e.target.id) removerErroInline(e.target.id); });
+
 // ============================================
 // VALIDAÇÕES
 // ============================================
@@ -141,8 +142,7 @@ function confirmarTipoCarregamento() {
   const opcao = document.querySelector('input[name="modelo_carregamento"]:checked')?.value;
 
   if (!opcao) {
-    const elementoFob = document.querySelector('input[name="modelo_carregamento"]');
-    mostrarErroInline(elementoFob ? elementoFob.id || 'step-tipo-carregamento' : 'step-tipo-carregamento', 'Selecione o Tipo de Carregamento (FOB ou TRANSFERÊNCIA/CIF)!');
+    mostrarErroInline('step-tipo-carregamento', 'Selecione o Tipo de Carregamento (FOB ou TRANSFERÊNCIA/CIF)!');
     return;
   }
 
@@ -160,29 +160,22 @@ function confirmarTipoCarregamento() {
 // ============================================
 
 function preencherUltimoCarregamento() {
-  // Puxa o telefone salvo na tabela 'motoristas' (se existir)
   const telefoneMotorista = dadosMotoristaAtual?.telefone || ultimaInspecaoAtual?.telefone || '';
 
-  // 1. Preenche o telefone com a informação da tabela 'motoristas'
   if (id('telefone') && telefoneMotorista) {
     id('telefone').value = telefoneMotorista;
   }
 
-  // Se for 1º acesso ou não houver histórico de inspeção, encerra aqui
   if (!ultimaInspecaoAtual) return;
 
   const dados = ultimaInspecaoAtual;
 
-  // 2. Dados Básicos e do Veículo
   if (id('nome') && dados.nome) id('nome').value = dados.nome;
   if (id('cnh') && dados.cnh) id('cnh').value = dados.cnh;
   if (id('placa') && dados.placa) id('placa').value = dados.placa;
   if (id('eixos') && dados.eixos) id('eixos').value = dados.eixos;
-  
-  // Limpa o pedido para o motorista digitar o atual
   if (id('pedido')) id('pedido').value = '';
 
-  // 3. Tipo de Veículo
   if (dados.tipo_veiculo) {
     const radioTipo = document.querySelector(`input[name="tipo_veiculo"][value="${dados.tipo_veiculo}"]`);
     if (radioTipo) {
@@ -191,7 +184,6 @@ function preencherUltimoCarregamento() {
     }
   }
 
-  // 4. Itens de Inspeção Veicular
   if (id('sinalizacao') && dados.sinalizacao) id('sinalizacao').value = dados.sinalizacao;
   if (id('pneus') && dados.pneus) id('pneus').value = dados.pneus;
   if (id('carroceria') && dados.carroceria) id('carroceria').value = dados.carroceria;
@@ -202,14 +194,12 @@ function preencherUltimoCarregamento() {
   if (id('calcos') && dados.calcos) id('calcos').value = dados.calcos;
   if (id('tampa_silo') && dados.tampa_silo) id('tampa_silo').value = dados.tampa_silo;
 
-  // 5. EPIs
   if (id('epi_capacete') && dados.epi_capacete) id('epi_capacete').value = dados.epi_capacete;
   if (id('epi_colete') && dados.epi_colete) id('epi_colete').value = dados.epi_colete;
   if (id('epi_oculos') && dados.epi_oculos) id('epi_oculos').value = dados.epi_oculos;
   if (id('epi_botina') && dados.epi_botina) id('epi_botina').value = dados.epi_botina;
   if (id('epi_luvas') && dados.epi_luvas) id('epi_luvas').value = dados.epi_luvas;
 
-  // 6. Paletes
   if (dados.paletes_opcao) {
     const radioPalete = document.querySelector(`input[name="paletes_opcao"][value="${dados.paletes_opcao}"]`);
     if (radioPalete) {
@@ -398,7 +388,6 @@ async function gerarJSONeToken() {
   if (!validarEixos(eixosDigitados)) return mostrarErroInline('eixos', 'Quantidade de eixos inválida');
   if (!tipoVeiculo) return mostrarErroInline('step-inspecao', 'Selecione o tipo do veículo');
 
-  // Campos de inspeção básicos
   const itensObrigatorios = ['sinalizacao', 'pneus', 'carroceria', 'cinto', 'farois', 'alarme_re', 'vazamentos', 'calcos', 'epi_capacete', 'epi_colete', 'epi_oculos', 'epi_botina', 'epi_luvas'];
   for (let campoId of itensObrigatorios) {
     if (!id(campoId)?.value) return mostrarErroInline(campoId, 'Selecione uma opção');
@@ -645,5 +634,7 @@ function ocultarTodas() {
 
   window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
 }
+
+document.addEventListener('DOMContentLoaded', irParaCPF);
 
 document.addEventListener('DOMContentLoaded', irParaCPF);
