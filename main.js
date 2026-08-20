@@ -141,6 +141,30 @@ function irParaSelecaoCarregamento() {
   id('step-tipo-carregamento').classList.remove('hidden');
 }
 
+function alternarCamposPedido() {
+  limparTodosErros();
+  const opcao = document.querySelector('input[name="modelo_carregamento"]:checked')?.value;
+  const containerFOB = id('container-pedido-fob');
+  const containerCIF = id('container-pedido-cif');
+  const inputFOB = id('pedido-fob-input');
+  const inputCIF = id('pedido-cif-input');
+
+  if (opcao === 'FOB') {
+    containerFOB.style.display = 'block';
+    containerCIF.style.display = 'none';
+    if (inputCIF) inputCIF.value = '';
+    if (inputFOB) inputFOB.focus();
+  } else if (opcao === 'CIF') {
+    containerCIF.style.display = 'block';
+    containerFOB.style.display = 'none';
+    if (inputFOB) inputFOB.value = '';
+    if (inputCIF) inputCIF.focus();
+  } else {
+    containerFOB.style.display = 'none';
+    containerCIF.style.display = 'none';
+  }
+}
+
 function confirmarTipoCarregamento() {
   limparTodosErros();
   const opcao = document.querySelector('input[name="modelo_carregamento"]:checked')?.value;
@@ -153,8 +177,23 @@ function confirmarTipoCarregamento() {
   tipoCarregamentoSelecionado = opcao;
 
   if (opcao === 'FOB') {
+    const pedidoFob = id('pedido-fob-input')?.value.trim();
+    if (!validarPedido(pedidoFob)) {
+      mostrarErroInline('pedido-fob-input', 'Digite um número de pedido FOB válido!');
+      return;
+    }
+    // Repassa o pedido digitado para o formulário FOB principal
+    if (id('pedido')) id('pedido').value = pedidoFob;
     irParaInspecao();
+
   } else if (opcao === 'CIF') {
+    const pedidoCif = id('pedido-cif-input')?.value.trim();
+    if (!validarPedido(pedidoCif)) {
+      mostrarErroInline('pedido-cif-input', 'Digite um número de pedido CIF/Transferência válido!');
+      return;
+    }
+    // Repassa o pedido digitado para o formulário CIF principal
+    if (id('cif-pedido')) id('cif-pedido').value = pedidoCif;
     irParaInspecaoCIF();
   }
 }
