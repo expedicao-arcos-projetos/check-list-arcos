@@ -19,7 +19,7 @@ let ehPrimeiraVez = false;
 let tipoCarregamentoSelecionado = '';
 
 // ============================================
-// FUNÇÕES DE FEEDBACK VISUAL INLINE (SEM ALERT)
+// FUNÇÕES DE ERRO INLINE (CAIXA VERMELHA)
 // ============================================
 
 function id(el) {
@@ -27,28 +27,25 @@ function id(el) {
 }
 
 function mostrarErroInline(elementId, mensagem) {
-  const elemento = document.getElementById(elementId);
+  const elemento = id(elementId);
   if (!elemento) return;
 
   const container = elemento.closest('.input-group') || elemento.parentElement;
   removerErroInline(elementId);
 
-  // Aplica o estilo de erro no container
   container.classList.add('has-error');
 
-  // Cria a caixa vermelha abaixo da label/input
   const feedback = document.createElement('div');
   feedback.className = 'form-feedback error';
   feedback.innerHTML = `<span>✕</span><span>${mensagem}</span>`;
   container.appendChild(feedback);
 
-  // Rola a tela até o erro
   elemento.scrollIntoView({ behavior: 'smooth', block: 'center' });
   elemento.focus();
 }
 
 function removerErroInline(elementId) {
-  const elemento = document.getElementById(elementId);
+  const elemento = id(elementId);
   if (!elemento) return;
 
   const container = elemento.closest('.input-group') || elemento.parentElement;
@@ -58,10 +55,17 @@ function removerErroInline(elementId) {
   if (feedbackAntigo) feedbackAntigo.remove();
 }
 
-// Remove o erro automaticamente assim que o motorista começa a digitar
+function limparTodosErros() {
+  document.querySelectorAll('.input-group').forEach(group => {
+    group.classList.remove('has-error');
+    const feedback = group.querySelector('.form-feedback');
+    if (feedback) feedback.remove();
+  });
+}
+
+// Remove o erro automaticamente ao digitar ou alterar
 document.addEventListener('input', (e) => { if (e.target.id) removerErroInline(e.target.id); });
 document.addEventListener('change', (e) => { if (e.target.id) removerErroInline(e.target.id); });
-
 // ============================================
 // VALIDAÇÕES
 // ============================================
