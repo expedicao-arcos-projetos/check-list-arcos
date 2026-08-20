@@ -610,7 +610,7 @@ select:focus {
   color: #15803d;
 }
 
-/* ========== FEEDBACK VISUAL DE VALIDAÇÃO (SEM POPUP) ========== */
+/* ========== CAIXA DE ERRO INLINE (VERMELHA) ========== */
 .input-group {
   position: relative;
   margin-bottom: 16px;
