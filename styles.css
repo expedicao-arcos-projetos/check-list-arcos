@@ -88,7 +88,7 @@ input[type="number"],
 select {
   width: 100%;
   padding: 12px;
-  margin-bottom: 15px;
+  margin-bottom: 6px;
   border: 2px solid #ddd;
   border-radius: 6px;
   font-size: 14px;
@@ -127,7 +127,7 @@ select:focus {
   transform: translateY(0);
 }
 
-/* ========== BLOCO DE REGRAS E DIRETRIZES ========== */
+/* ========== REGRAS E DIRETRIZES ========== */
 
 .regras-container {
   background: #f8f9fa;
@@ -196,13 +196,15 @@ select:focus {
   border-radius: 6px;
   margin-bottom: 10px;
   border-left: 4px solid #667eea;
+  flex-wrap: wrap;
 }
 
-.item-check span {
+.item-check label {
   color: #333;
   font-weight: 500;
   flex: 1;
   padding-right: 10px;
+  margin: 0;
 }
 
 .item-check select {
@@ -210,7 +212,7 @@ select:focus {
   margin-bottom: 0;
 }
 
-/* ========== ESTILOS PARA PALETES ========== */
+/* ========== PALETES ========== */
 
 .paletes-container {
   background: #f8f9fa;
@@ -265,50 +267,7 @@ select:focus {
   padding: 10px;
 }
 
-/* ========== RESPONSIVIDADE (CELULARES) ========== */
-
-@media (max-width: 600px) {
-  .card {
-    padding: 20px;
-  }
-
-  h2 {
-    font-size: 20px;
-  }
-
-  h3 {
-    font-size: 16px;
-  }
-
-  .item-check {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .item-check select {
-    width: 100%;
-    margin-bottom: 0; /* Previne duplicar o espaçamento com o gap */
-  }
-
-  .radio-group input[type="radio"] + br {
-    display: block;
-    margin-bottom: 5px;
-  }
-
-  .paletes-container {
-    padding: 12px;
-  }
-
-  .paletes-label {
-    font-size: 14px;
-  }
-
-  #quantidade-paletes-container {
-    margin-top: 10px;
-  }
-}
-/* ACCORDION PARA OS TERMOS */
+/* ACCORDION */
 .accordion-termo {
   background: #f8f9fa;
   border: 1px solid #ddd;
@@ -337,7 +296,6 @@ select:focus {
   border-bottom: 1px solid #ddd;
 }
 
-/* CAIXA COM ROLAGEM DENTRO DO ACCORDION */
 .termo-box {
   padding: 15px;
   max-height: 200px;
@@ -351,18 +309,18 @@ select:focus {
   margin-bottom: 10px;
 }
 
-.termo-box ol {
+.termo-box ul {
   padding-left: 20px;
+  margin-bottom: 10px;
 }
 
-.termo-box li {
+.termo-box ul li {
   font-size: 12px;
   color: #555;
-  margin-bottom: 6px;
-  line-height: 1.4;
+  margin-bottom: 4px;
 }
 
-/* CONTAINER DE ACEITE */
+/* TERMO DE ACEITE */
 .aceite-container {
   background: #eef2ff;
   border: 1px dashed #667eea;
@@ -372,7 +330,6 @@ select:focus {
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-/* ESTADO VERDE QUANDO O CHECKBOX ESTIVER MARCADO */
 .aceite-container:has(input[type="checkbox"]:checked) {
   background: #e6f4ea;
   border: 1px solid #28a745;
@@ -392,11 +349,11 @@ select:focus {
   width: 18px;
   height: 18px;
   margin-right: 10px;
-  accent-color: #28a745; /* Deixa o quadradinho do check verde */
+  accent-color: #28a745;
   cursor: pointer;
 }
 
-/* CONTAINER E BOTÃO DE AJUDA CNH */
+/* CNH HELPER */
 .form-group-cnh {
   margin-bottom: 15px;
 }
@@ -439,18 +396,6 @@ select:focus {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.termo-box ul {
-  padding-left: 20px;
-  margin-bottom: 10px;
-}
-
-.termo-box ul li {
-  font-size: 12px;
-  color: #555;
-  margin-bottom: 4px;
-}
-
-/* BOTÃO DE VOLTAR NO TOPO DAS PÁGINAS */
 .btn-voltar {
   background: #f1f3f9;
   color: #555;
@@ -471,8 +416,7 @@ select:focus {
   color: #333;
 }
 
-/* ========== SELEÇÃO DO TIPO DE VEÍCULO ========== */
-
+/* SELEÇÃO DO TIPO DE VEÍCULO */
 .tipo-veiculo-container {
   background: #f8f9fa;
   border-left: 4px solid #667eea;
@@ -493,12 +437,10 @@ select:focus {
   margin: 0;
 }
 
-/* Oculta a bolinha padrão do radio button */
 .card-tipo-veiculo input[type="radio"] {
   display: none;
 }
 
-/* Caixa com a imagem e a legenda */
 .conteudo-tipo {
   background: #ffffff;
   border: 2px solid #cbd5e1;
@@ -526,13 +468,11 @@ select:focus {
   color: #475569;
 }
 
-/* Efeito Hover */
 .card-tipo-veiculo:hover .conteudo-tipo {
   border-color: #667eea;
   background: #f1f5f9;
 }
 
-/* Estado Selecionado (Destaque em Roxo/Azul com Check) */
 .card-tipo-veiculo input[type="radio"]:checked + .conteudo-tipo {
   border-color: #28a745;
   background-color: #f0fdf4;
@@ -543,15 +483,7 @@ select:focus {
   color: #15803d;
 }
 
-/* Responsividade para Celulares */
-@media (max-width: 600px) {
-  .tipo-veiculo-opcoes {
-    flex-direction: column;
-    gap: 10px;
-  }
-}
-
-/* ========== SELEÇÃO DE TIPO DE CARREGAMENTO ========== */
+/* SELEÇÃO DE TIPO DE CARREGAMENTO */
 .tipo-carregamento-opcoes {
   display: flex;
   flex-direction: column;
@@ -594,7 +526,6 @@ select:focus {
   color: #0284c7;
 }
 
-/* Hover e Seleção */
 .card-carregamento:hover .conteudo-carregamento {
   border-color: #667eea;
   background-color: #f8fafc;
@@ -610,19 +541,20 @@ select:focus {
   color: #15803d;
 }
 
-/* ========== CAIXA DE ERRO INLINE (VERMELHA) ========== */
+/* CAIXA DE ERRO INLINE (VERMELHA) */
 .input-group {
   position: relative;
   margin-bottom: 16px;
 }
 
-.input-group.has-error input,
-.input-group.has-error select {
+.has-error input,
+.has-error select {
   border-color: #dc3545 !important;
   background-color: #fff5f5 !important;
 }
 
 .form-feedback {
+  width: 100%;
   margin-top: 6px;
   padding: 8px 12px;
   border-radius: 6px;
@@ -643,4 +575,13 @@ select:focus {
 @keyframes slideInFeedback {
   from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .card { padding: 20px; }
+  h2 { font-size: 20px; }
+  h3 { font-size: 16px; }
+  .item-check { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .item-check select { width: 100%; margin-bottom: 0; }
+  .tipo-veiculo-opcoes { flex-direction: column; gap: 10px; }
 }
