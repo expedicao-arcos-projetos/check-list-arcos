@@ -14,7 +14,7 @@
     <div class="card" id="step-cpf">
       <h2>🚗 Acesso do Motorista</h2>
       
-      <form id="form-cpf-busca" onsubmit="event.preventDefault(); verificarAcesso();">
+      <form id="form-cpf-busca" novalidate onsubmit="event.preventDefault(); verificarAcesso();">
         <div class="input-group">
           <label for="input-cpf">Informe seu CPF (somente números):</label>
           <input type="text" id="input-cpf" placeholder="EX: 00000000000" maxlength="11" inputmode="numeric" required>
@@ -45,7 +45,7 @@
       <button type="button" class="btn-voltar" onclick="voltarPaginaAnterior()">⬅️ Voltar</button>
       <h2>📋 1º Acesso: Cadastro, Vídeo & Prova</h2>     
       
-      <form id="form-prova" onsubmit="event.preventDefault(); concluirIntegracao();">
+      <form id="form-prova" novalidate onsubmit="event.preventDefault(); concluirIntegracao();">
         <h3>Dados de Cadastro do Motorista</h3>
         
         <div class="input-group">
@@ -224,7 +224,7 @@
       <button type="button" class="btn-voltar" onclick="voltarPaginaAnterior()">⬅️ Voltar</button>
       <h2>🔍 Formulário de Inspeção Veicular (FOB)</h2>     
       
-      <form id="form-inspecao" onsubmit="event.preventDefault(); gerarJSONeToken();">
+      <form id="form-inspecao" novalidate onsubmit="event.preventDefault(); gerarJSONeToken();">
         <div class="input-group">
           <label for="nome">Nome Completo:</label>
           <input type="text" id="nome" placeholder="EX: João da Silva" required>
@@ -454,7 +454,7 @@
       <button type="button" class="btn-voltar" onclick="voltarPaginaAnterior()">⬅️ Voltar</button>
       <h2>📋 Inspeção Veicular - CIF / FCA</h2>
     
-      <form id="form-inspecao-cif" onsubmit="event.preventDefault(); salvarInspecaoCIF();">
+      <form id="form-inspecao-cif" novalidate onsubmit="event.preventDefault(); salvarInspecaoCIF();">
         <!-- DADOS DO MOTORISTA -->
         <h3>👤 Dados do Motorista e Veículo</h3>
         
