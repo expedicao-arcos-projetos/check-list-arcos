@@ -11,6 +11,47 @@
  * - Validação em tempo real
  * - Indicadores visuais (cores, ícones)
  */
+if (typeof auth === 'undefined') {
+  window.auth = {
+    estaAutenticado: () => false,
+    login: async (cpf) => ({ nome: 'Motorista' }),
+    logout: () => {},
+    obterCPFAtual: () => '00000000000',
+    fazerRequisicaoSegura: async (url, options) => ({
+      ok: true,
+      json: async () => ({ existe: false, sucesso: true, id_inspecao: 'INSP-' + Date.now() })
+    })
+  };
+}
+
+if (typeof logger === 'undefined') {
+  window.logger = {
+    registrarAcao: console.log,
+    registrarLogin: console.log,
+    registrarLogout: console.log,
+    registrarErro: console.error,
+    registrarValidacaoFalhada: console.warn,
+    registrarInspecao: console.log
+  };
+}
+
+if (typeof notificacao === 'undefined') {
+  window.notificacao = {
+    sucesso: (t, m) => alert(`${t}: ${m}`),
+    erro: (t, m) => alert(`${t}: ${m}`),
+    aviso: (t, m) => alert(`${t}: ${m}`),
+    carregando: () => ({ remove: () => {} }),
+    modal: async (t, m) => true
+  };
+}
+
+if (typeof offlineSync === 'undefined') {
+  window.offlineSync = {
+    salvarRascunhoInspecao: async () => 'OFFLINE-123',
+    sincronizarOperacoes: () => {}
+  };
+}
+
 
 const WORKER_URL = 'https://sistema-inspecoes.samuelvivi1996.workers.dev';
 
