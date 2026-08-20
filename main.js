@@ -52,13 +52,13 @@ document.addEventListener('DOMContentLoaded', () => {
 /**
  * Inicializar todos os validadores de formulário
  */
+
 function inicializarValidadores() {
-  // Validador de CPF (Etapa 1)
-  validadorCPF = new formValidator('form-cpf-busca');
+  // Use FormValidator com F maiúsculo:
+  validadorCPF = new FormValidator('form-cpf-busca');
   validadorCPF.adicionarRegra('input-cpf', 'cpf', 'CPF inválido');
 
-  // Validador de Integração (Etapa 2)
-  validadorIntegracao = new formValidator('form-prova');
+  validadorIntegracao = new FormValidator('form-prova');
   validadorIntegracao
     .adicionarRegra('reg-nome', 'obrigatorio', 'Nome completo é obrigatório')
     .adicionarRegra('reg-nome', 'minimo', 'Mínimo 3 caracteres', { min: 3 })
@@ -66,8 +66,7 @@ function inicializarValidadores() {
     .adicionarRegra('reg-telefone', 'telefone', 'Telefone com DDD inválido')
     .adicionarRegra('reg-placa', 'placa', 'Placa inválida');
 
-  // Validador de Inspeção FOB (Etapa 3A)
-  validadorInspecaoFOB = new formValidator('form-inspecao');
+  validadorInspecaoFOB = new FormValidator('form-inspecao');
   validadorInspecaoFOB
     .adicionarRegra('nome', 'obrigatorio', 'Nome é obrigatório')
     .adicionarRegra('cnh', 'cnh', 'CNH inválida')
@@ -76,8 +75,7 @@ function inicializarValidadores() {
     .adicionarRegra('pedido', 'pedido', 'Número de pedido inválido')
     .adicionarRegra('eixos', 'eixos', 'Quantidade de eixos inválida (1-9)');
 
-  // Validador de Inspeção CIF (Etapa 3B)
-  validadorInspecaoCIF = new formValidator('form-inspecao-cif');
+  validadorInspecaoCIF = new FormValidator('form-inspecao-cif');
   validadorInspecaoCIF
     .adicionarRegra('cif-nome', 'obrigatorio', 'Nome é obrigatório')
     .adicionarRegra('cif-cnh', 'cnh', 'CNH inválida')
