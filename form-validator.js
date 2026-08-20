@@ -1,16 +1,71 @@
 // ============================================
-// VALIDADOR AVANÇADO DE FORMULÁRIOS
-// COM FEEDBACK VISUAL LIMPO E INTELIGENTE
+// OBJETO AUXILIAR DE REGRAS DE VALIDAÇÃO
 // ============================================
+const validador = {
+  validarCPF(cpf) {
+    cpf = cpf.replace(/[^\d]+/g, '');
+    if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return { valido: false, erro: 'CPF inválido (11 dígitos)' };
+    let soma = 0, resto;
+    for (let i = 1; i <= 9; i++) soma += parseInt(cpf.substring(i - 1, i)) * (11 - i);
+    resto = (soma * 10) % 11;
+    if (resto === 10 || resto === 11) resto = 0;
+    if (resto !== parseInt(cpf.substring(9, 10))) return { valido: false, erro: 'CPF inválido' };
+    soma = 0;
+    for (let i = 1; i <= 10; i++) soma += parseInt(cpf.substring(i - 1, i)) * (12 - i);
+    resto = (soma * 10) % 11;
+    if (resto === 10 || resto === 11) resto = 0;
+    if (resto !== parseInt(cpf.substring(10, 11))) return { valido: false, erro: 'CPF inválido' };
+    return { valido: true };
+  },
 
-/**
- * Sistema de validação que:
- * - Valida em tempo real (onchange/onblur)
- * - Mostra feedback inline limpo (sem alert)
- * - Mantém histórico de erros
- * - Integra com notificação ao submeter
- * - Suporta validação customizada
- */
+  validarCNH(cnh) {
+    cnh = cnh.replace(/[^\d]+/g, '');
+    if (cnh.length !== 11) return { valido: false, erro: 'CNH deve ter 11 dígitos' };
+    return { valido: true };
+  },
+
+  validarRG(rg) {
+    rg = rg.replace(/[^\d]+/g, '');
+    if (rg.length < 5) return { valido: false, erro: 'RG inválido' };
+    return { valido: true };
+  },
+
+  validarPlaca(placa) {
+    placa = placa.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    const regexPlaca = /^[A-Z]{3}[0-9]{4}$|^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
+    return {
+      valido: regexPlaca.test(placa),
+      erro: 'Placa inválida (Use o formato ABC1234 ou ABC1A34)'
+    };
+  },
+
+  validarTelefone(tel) {
+    tel = tel.replace(/[^\d]+/g, '');
+    return {
+      valido: tel.length >= 10 && tel.length <= 11,
+      erro: 'Telefone inválido (Informe DDD + número)'
+    };
+  },
+
+  validarEmail(email) {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return { valido: regex.test(email), erro: 'E-mail inválido' };
+  },
+
+  validarPedido(pedido) {
+    pedido = pedido.replace(/[^\d]+/g, '');
+    return { valido: pedido.length >= 6, erro: 'Número de pedido inválido' };
+  },
+
+  validarEixos(eixos) {
+    const num = parseInt(eixos, 10);
+    return { valido: !isNaN(num) && num >= 1 && num <= 9, erro: 'Informe eixos entre 1 e 9' };
+  }
+};
+
+// ============================================
+// VALIDADOR AVANÇADO DE FORMULÁRIOS
+// ============================================
 
 class FormValidator {
   constructor(formId) {
@@ -21,18 +76,10 @@ class FormValidator {
     this.inicializar();
   }
 
-  /**
-   * Inicializar validador
-   */
   inicializar() {
-    if (!this.form) {
-      console.error('Formulário não encontrado');
-      return;
-    }
+    if (!this.form) return;
 
-    // Obter todos os inputs/selects/textareas
     const elementos = this.form.querySelectorAll('input, select, textarea');
-
     elementos.forEach(el => {
       if (el.id) {
         this.campos[el.id] = {
@@ -42,11 +89,9 @@ class FormValidator {
           valor: el.value
         };
 
-        // Adicionar listeners para validação em tempo real
         el.addEventListener('blur', () => this.validarCampo(el.id));
         el.addEventListener('change', () => this.validarCampo(el.id));
         el.addEventListener('input', () => {
-          // Debounce de validação durante digitação
           clearTimeout(this.timeoutInput);
           this.timeoutInput = setTimeout(() => {
             this.validarCampo(el.id);
@@ -56,14 +101,8 @@ class FormValidator {
     });
   }
 
-  /**
-   * Adicionar regra de validação a um campo
-   */
   adicionarRegra(idCampo, tipo, mensagem, opcoes = {}) {
-    if (!this.campos[idCampo]) {
-      console.warn(`Campo ${idCampo} não encontrado`);
-      return;
-    }
+    if (!this.campos[idCampo]) return this;
 
     this.campos[idCampo].regras.push({
       tipo,
@@ -74,9 +113,6 @@ class FormValidator {
     return this;
   }
 
-  /**
-   * Validar um campo individual
-   */
   validarCampo(idCampo) {
     const campo = this.campos[idCampo];
     if (!campo) return true;
@@ -84,10 +120,8 @@ class FormValidator {
     const valor = campo.elemento.value.trim();
     const regras = campo.regras;
 
-    // Limpar erro anterior
     this.limparErro(idCampo);
 
-    // Validar cada regra
     for (let regra of regras) {
       const resultado = this.executarValidacao(valor, regra, campo);
 
@@ -98,7 +132,6 @@ class FormValidator {
       }
     }
 
-    // Se passou em todas as validações
     if (regras.length > 0) {
       this.mostrarSucesso(idCampo);
     }
@@ -107,282 +140,154 @@ class FormValidator {
     return true;
   }
 
-  /**
-   * Executar validação específica
-   */
   executarValidacao(valor, regra, campo) {
     const { tipo, mensagem, opcoes } = regra;
 
-    // Validações vazias
     if (!valor && tipo !== 'opcional') {
-      return {
-        valido: false,
-        mensagem: mensagem || 'Este campo é obrigatório'
-      };
+      return { valido: false, mensagem: mensagem || 'Este campo é obrigatório' };
     }
 
     if (!valor && tipo === 'opcional') {
       return { valido: true };
     }
 
-    // Validações por tipo
     switch (tipo) {
       case 'obrigatorio':
         return { valido: valor !== '' };
 
       case 'cpf':
         const validacaoCPF = validador.validarCPF(valor);
-        return {
-          valido: validacaoCPF.valido,
-          mensagem: mensagem || validacaoCPF.erro
-        };
+        return { valido: validacaoCPF.valido, mensagem: mensagem || validacaoCPF.erro };
 
       case 'cnh':
         const validacaoCNH = validador.validarCNH(valor);
-        return {
-          valido: validacaoCNH.valido,
-          mensagem: mensagem || validacaoCNH.erro
-        };
+        return { valido: validacaoCNH.valido, mensagem: mensagem || validacaoCNH.erro };
 
       case 'rg':
         const validacaoRG = validador.validarRG(valor);
-        return {
-          valido: validacaoRG.valido,
-          mensagem: mensagem || validacaoRG.erro
-        };
+        return { valido: validacaoRG.valido, mensagem: mensagem || validacaoRG.erro };
 
       case 'placa':
         const validacaoPlaca = validador.validarPlaca(valor);
-        return {
-          valido: validacaoPlaca.valido,
-          mensagem: mensagem || validacaoPlaca.erro
-        };
+        return { valido: validacaoPlaca.valido, mensagem: mensagem || validacaoPlaca.erro };
 
       case 'telefone':
         const validacaoTel = validador.validarTelefone(valor);
-        return {
-          valido: validacaoTel.valido,
-          mensagem: mensagem || validacaoTel.erro
-        };
+        return { valido: validacaoTel.valido, mensagem: mensagem || validacaoTel.erro };
 
       case 'email':
         const validacaoEmail = validador.validarEmail(valor);
-        return {
-          valido: validacaoEmail.valido,
-          mensagem: mensagem || validacaoEmail.erro
-        };
+        return { valido: validacaoEmail.valido, mensagem: mensagem || validacaoEmail.erro };
 
       case 'pedido':
         const validacaoPedido = validador.validarPedido(valor);
-        return {
-          valido: validacaoPedido.valido,
-          mensagem: mensagem || validacaoPedido.erro
-        };
+        return { valido: validacaoPedido.valido, mensagem: mensagem || validacaoPedido.erro };
 
       case 'eixos':
         const validacaoEixos = validador.validarEixos(valor);
-        return {
-          valido: validacaoEixos.valido,
-          mensagem: mensagem || validacaoEixos.erro
-        };
+        return { valido: validacaoEixos.valido, mensagem: mensagem || validacaoEixos.erro };
 
       case 'minimo':
-        return {
-          valido: valor.length >= opcoes.min,
-          mensagem: mensagem || `Mínimo de ${opcoes.min} caracteres`
-        };
+        return { valido: valor.length >= opcoes.min, mensagem: mensagem || `Mínimo de ${opcoes.min} caracteres` };
 
       case 'maximo':
-        return {
-          valido: valor.length <= opcoes.max,
-          mensagem: mensagem || `Máximo de ${opcoes.max} caracteres`
-        };
-
-      case 'tamanho':
-        return {
-          valido: valor.length === opcoes.tamanho,
-          mensagem: mensagem || `Deve ter exatamente ${opcoes.tamanho} caracteres`
-        };
-
-      case 'regex':
-        return {
-          valido: opcoes.pattern.test(valor),
-          mensagem: mensagem || 'Formato inválido'
-        };
+        return { valido: valor.length <= opcoes.max, mensagem: mensagem || `Máximo de ${opcoes.max} caracteres` };
 
       case 'customizado':
         const resultado = opcoes.funcao(valor);
-        return {
-          valido: resultado === true,
-          mensagem: mensagem || (typeof resultado === 'string' ? resultado : 'Validação falhou')
-        };
-
-      case 'confirmacao':
-        const campoComparacao = document.getElementById(opcoes.comparaCom);
-        return {
-          valido: valor === campoComparacao?.value,
-          mensagem: mensagem || 'Os valores não correspondem'
-        };
+        return { valido: resultado === true, mensagem: mensagem || 'Validação falhou' };
 
       default:
         return { valido: true };
     }
   }
 
-  /**
-   * Mostrar erro no campo
-   */
   mostrarErro(idCampo, mensagem) {
     const campo = this.campos[idCampo];
     const elemento = campo.elemento;
     const container = elemento.closest('.input-group') || elemento.parentElement;
 
-    // Remover feedback anterior
     this.removerFeedback(container);
-
-    // Adicionar classe de erro
     container.classList.remove('has-success', 'has-warning');
     container.classList.add('has-error');
 
-    // Criar elemento de feedback
     const feedback = document.createElement('div');
     feedback.className = 'form-feedback error';
-    feedback.innerHTML = `
-      <span class="feedback-icon">✕</span>
-      <span class="feedback-message">${mensagem}</span>
-    `;
-
+    feedback.innerHTML = `<span class="feedback-icon">✕</span><span class="feedback-message">${mensagem}</span>`;
     container.appendChild(feedback);
-
-    // Animar entrada
-    feedback.style.animation = 'slideIn 0.3s ease-out';
   }
 
-  /**
-   * Mostrar sucesso no campo
-   */
   mostrarSucesso(idCampo) {
     const campo = this.campos[idCampo];
     const elemento = campo.elemento;
     const container = elemento.closest('.input-group') || elemento.parentElement;
 
-    // Remover feedback anterior
     this.removerFeedback(container);
-
-    // Adicionar classe de sucesso
     container.classList.remove('has-error', 'has-warning');
     container.classList.add('has-success');
 
-    // Criar elemento de feedback (opcional)
     const feedback = document.createElement('div');
     feedback.className = 'form-feedback success';
-    feedback.innerHTML = `
-      <span class="feedback-icon">✓</span>
-    `;
-
+    feedback.innerHTML = `<span class="feedback-icon">✓</span>`;
     container.appendChild(feedback);
 
-    // Remover após 2 segundos
-    setTimeout(() => {
-      feedback.remove();
-    }, 2000);
+    setTimeout(() => { feedback.remove(); }, 2000);
   }
 
-  /**
-   * Limpar erro de um campo
-   */
   limparErro(idCampo) {
     const campo = this.campos[idCampo];
+    if (!campo) return;
     const elemento = campo.elemento;
     const container = elemento.closest('.input-group') || elemento.parentElement;
 
     this.removerFeedback(container);
     container.classList.remove('has-error', 'has-success', 'has-warning');
-
     delete this.erros[idCampo];
   }
 
-  /**
-   * Remover elemento de feedback
-   */
   removerFeedback(container) {
     const feedback = container?.querySelector('.form-feedback');
     if (feedback) feedback.remove();
   }
 
-  /**
-   * Validar formulário inteiro
-   */
   validarFormulario() {
     let temErros = false;
-
     for (let idCampo in this.campos) {
-      const campo = this.campos[idCampo];
-
-      // Pular campos com validação vazia
-      if (campo.regras.length === 0) continue;
-
-      if (!this.validarCampo(idCampo)) {
-        temErros = true;
-      }
+      if (this.campos[idCampo].regras.length === 0) continue;
+      if (!this.validarCampo(idCampo)) temErros = true;
     }
-
     return !temErros;
   }
 
-  /**
-   * Obter todos os erros
-   */
   obterErros() {
     return { ...this.erros };
   }
 
-  /**
-   * Obter valores do formulário
-   */
   obterValores() {
     const valores = {};
-
     for (let idCampo in this.campos) {
       valores[idCampo] = this.campos[idCampo].elemento.value;
     }
-
     return valores;
   }
 
-  /**
-   * Resetar formulário e validações
-   */
   resetar() {
     this.form.reset();
     this.erros = {};
-
-    for (let idCampo in this.campos) {
-      this.limparErro(idCampo);
-    }
+    for (let idCampo in this.campos) this.limparErro(idCampo);
   }
 
-  /**
-   * Desabilitar/Habilitar formulário durante submissão
-   */
   desabilitarDurante(durante = true) {
     const inputs = this.form.querySelectorAll('input, select, textarea, button');
-    inputs.forEach(el => {
-      el.disabled = durante;
-    });
+    inputs.forEach(el => { el.disabled = durante; });
     this.isSubmitting = durante;
   }
 
-  /**
-   * Mostrar resumo de erros
-   */
   mostrarResumoErros() {
     const erros = this.obterErros();
     const camposComErro = Object.keys(erros);
-
     if (camposComErro.length === 0) return true;
 
-    // Criar mensagem de erro
     let mensagem = `<strong>Erros encontrados:</strong><br/>`;
     camposComErro.forEach(campo => {
       const elemento = this.campos[campo]?.elemento;
@@ -390,11 +295,12 @@ class FormValidator {
       mensagem += `• ${label}: ${erros[campo]}<br/>`;
     });
 
-    // Mostrar notificação
-    notificacao.erro('Formulário Inválido', mensagem);
-    logger.registrarValidacaoFalhada('formulario', JSON.stringify(erros), 'Múltiplos campos inválidos');
+    if (typeof notificacao !== 'undefined') {
+      notificacao.erro('Formulário Inválido', mensagem);
+    } else {
+      alert('Preencha os campos obrigatórios corretamente.');
+    }
 
-    // Scroll para primeiro erro
     const primeiroComErro = document.getElementById(camposComErro[0]);
     if (primeiroComErro) {
       primeiroComErro.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -405,171 +311,5 @@ class FormValidator {
   }
 }
 
-// ============================================
-// CSS PARA FEEDBACK DE VALIDAÇÃO
-// ============================================
-
-function adicionarCSSValidacao() {
-  if (document.getElementById('form-validator-styles')) return;
-
-  const style = document.createElement('style');
-  style.id = 'form-validator-styles';
-  style.textContent = `
-    /* Container com validação */
-    .input-group {
-      position: relative;
-      margin-bottom: 16px;
-    }
-
-    .input-group.has-error input,
-    .input-group.has-error select,
-    .input-group.has-error textarea {
-      border-color: #dc3545 !important;
-      background-color: #fff5f5;
-    }
-
-    .input-group.has-success input,
-    .input-group.has-success select,
-    .input-group.has-success textarea {
-      border-color: #28a745 !important;
-      background-color: #f0fdf4;
-    }
-
-    .input-group.has-warning input,
-    .input-group.has-warning select,
-    .input-group.has-warning textarea {
-      border-color: #ff9800 !important;
-      background-color: #fff8e1;
-    }
-
-    /* Feedback de validação */
-    .form-feedback {
-      margin-top: 6px;
-      padding: 8px 12px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      animation: slideIn 0.3s ease-out;
-    }
-
-    .form-feedback.error {
-      background: #fee2e2;
-      color: #991b1b;
-      border-left: 3px solid #dc3545;
-    }
-
-    .form-feedback.success {
-      background: #dcfce7;
-      color: #15803d;
-      border-left: 3px solid #28a745;
-    }
-
-    .form-feedback.warning {
-      background: #fef3c7;
-      color: #92400e;
-      border-left: 3px solid #ff9800;
-    }
-
-    .feedback-icon {
-      font-weight: bold;
-      font-size: 13px;
-    }
-
-    .feedback-message {
-      flex: 1;
-      line-height: 1.4;
-    }
-
-    /* Estado focado com erro */
-    .input-group.has-error input:focus,
-    .input-group.has-error select:focus,
-    .input-group.has-error textarea:focus {
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
-    }
-
-    /* Estado focado com sucesso */
-    .input-group.has-success input:focus,
-    .input-group.has-success select:focus,
-    .input-group.has-success textarea:focus {
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
-    }
-
-    /* Animação de slide */
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(-8px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* Desabilitar durante submissão */
-    .form-submitting input,
-    .form-submitting select,
-    .form-submitting textarea,
-    .form-submitting button {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    /* Destaque em erro */
-    .input-group.has-error label {
-      color: #dc3545;
-    }
-
-    /* Campo obrigatório */
-    .required::after {
-      content: ' *';
-      color: #dc3545;
-      font-weight: bold;
-    }
-  `;
-
-  document.head.appendChild(style);
-}
-
-// Adicionar CSS ao carregar o módulo
-adicionarCSSValidacao();
-
-// Exportar classe
+// Exportar globalmente
 window.FormValidator = FormValidator;
-
-// Exemplo de uso:
-/*
-// Criar validador
-const validator = new FormValidator('meu-formulario');
-
-// Adicionar regras
-validator
-  .adicionarRegra('cpf', 'cpf', 'CPF inválido')
-  .adicionarRegra('nome', 'obrigatorio', 'Nome é obrigatório')
-  .adicionarRegra('nome', 'minimo', 'Mínimo 3 caracteres', { min: 3 })
-  .adicionarRegra('telefone', 'telefone', 'Telefone inválido')
-  .adicionarRegra('placa', 'placa', 'Placa inválida')
-  .adicionarRegra('senha', 'minimo', 'Mínimo 8 caracteres', { min: 8 })
-  .adicionarRegra('confirma_senha', 'confirmacao', 'As senhas não correspondem', { comparaCom: 'senha' });
-
-// Validar ao submeter
-document.getElementById('meu-botao').addEventListener('click', (e) => {
-  e.preventDefault();
-
-  if (validator.validarFormulario()) {
-    const valores = validator.obterValores();
-    console.log('Formulário válido:', valores);
-    // Enviar dados
-  } else {
-    validator.mostrarResumoErros();
-  }
-});
-
-// Resetar
-validator.resetar();
-*/
