@@ -512,11 +512,23 @@
         </div>
 
         <div class="input-group">
-          <label for="cif-segmento">Segmento (Transportadora / Autônomo:</label>
-          <select id="cif-segmento" required>
+          <label for="cif-segmento">Segmento:</label>
+          <select id="cif-segmento" onchange="alternarCampoTransportadora()" required>
             <option value="">-- Selecione --</option>
             <option value="Transportador">Transportador</option>
             <option value="Autonomo">Autônomo</option>
+          </select>
+        </div>
+
+        <!-- NOVO CAMPO: SELEÇÃO DA TRANSPORTADORA (Exibido se Segmento = Transportador) -->
+        <div class="input-group" id="container-cif-transportadora" style="display: none;">
+          <label for="cif-transportadora">Selecione a Transportadora:</label>
+          <select id="cif-transportadora">
+            <option value="">-- Selecione --</option>
+            <option value="TORA">TORA</option>
+            <option value="TRANSAGIL">TRANSAGIL</option>
+            <option value="TARGET">TARGET</option>
+            <option value="FROTA CSN">FROTA CSN</option>
           </select>
         </div>
 
