@@ -535,7 +535,10 @@ async function salvarInspecaoCIF() {
   const eixos = getVal('cif-eixos', 'eixos') || ultimaInspecaoAtual?.eixos || '';
   const tipoChecklist = id('cif-tipo-checklist')?.value || '';
   const segmento = id('cif-segmento')?.value || '';
-
+  const tipoChecklist = id('cif-tipo-checklist')?.value || '';
+  const segmento = id('cif-segmento')?.value || '';
+  const transportadora = id('cif-transportadora')?.value || '';
+  
   if (!nome) return mostrarErroInline('cif-nome', 'Informe seu nome completo');
   if (!cnh) return mostrarErroInline('cif-cnh', 'Informe a CNH');
   if (!validarTelefone(telefone)) return mostrarErroInline('cif-telefone', 'Telefone/WhatsApp inválido');
@@ -545,12 +548,16 @@ async function salvarInspecaoCIF() {
 
   if (!tipoChecklist) return mostrarErroInline('cif-tipo-checklist', 'Selecione o Tipo de Checklist CIP');
   if (!segmento) return mostrarErroInline('cif-segmento', 'Selecione o Segmento');
+  if (segmento === 'Transportador' && !transportadora) {
+    return mostrarErroInline('cif-transportadora', 'Selecione a Transportadora');
+  }
 
   const inspecaoDados = {
     nome, cnh, telefone, placa, pedido, eixos,
     data: new Date().toLocaleDateString('pt-BR'),
     tipo_checklist: tipoChecklist,
-    segmento: segmento
+    segmento: segmento,
+    transportadora: segmento === 'Transportador' ? transportadora : 'N/A'
   };
 
   for (let i = 1; i <= 32; i++) {
