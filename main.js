@@ -622,6 +622,14 @@ function irParaCPF() {
   if (id('form-inspecao')) id('form-inspecao').reset();
   if (id('form-inspecao-cif')) id('form-inspecao-cif').reset();
 
+  // Limpa campos da tela de tipo de carregamento
+  const radiosCarregamento = document.querySelectorAll('input[name="modelo_carregamento"]');
+  radiosCarregamento.forEach(radio => radio.checked = false);
+  if (id('pedido-fob-input')) id('pedido-fob-input').value = '';
+  if (id('pedido-cif-input')) id('pedido-cif-input').value = '';
+  if (id('container-pedido-fob')) id('container-pedido-fob').style.display = 'none';
+  if (id('container-pedido-cif')) id('container-pedido-cif').style.display = 'none';
+
   ocultarQuantidadePaletes();
   alternarBloqueioProva();
 
