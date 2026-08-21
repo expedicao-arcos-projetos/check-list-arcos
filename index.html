@@ -429,7 +429,7 @@
           </select>
         </div>
     
-        <!-- PALETES -->
+        <!-- PALETES FOB -->
         <div id="secao-paletes">
           <h3>📦 Paletes</h3>
           <div class="paletes-container" id="container-paletes">
@@ -498,6 +498,52 @@
           <input type="text" id="cif-eixos" placeholder="EX: 3 (máx. 9)" maxlength="1" inputmode="numeric" required>
         </div>
 
+        <!-- SELEÇÃO DO TIPO DE VEÍCULO CIF -->
+        <h3>🚛 Seleção do Tipo de Veículo</h3>
+        <div class="tipo-veiculo-container">
+          <p style="font-weight: 600; margin-bottom: 12px; color: #333;">Seu veículo é:</p>
+          <div class="tipo-veiculo-opcoes">
+            <label class="card-tipo-veiculo">
+              <input type="radio" name="cif_tipo_veiculo" value="CARGA_SECA" onchange="atualizarCamposCIF()">
+              <div class="conteudo-tipo">
+                <img src="arquivos/carga_seca.png" alt="Carga Seca (PALETIZADO)">
+                <span>Carga Seca (PALETIZADO)</span>
+              </div>
+            </label>
+            <label class="card-tipo-veiculo">
+              <input type="radio" name="cif_tipo_veiculo" value="CARRETA_SILO" onchange="atualizarCamposCIF()">
+              <div class="conteudo-tipo">
+                <img src="arquivos/carreta_silo.png" alt="Carreta Silo (POTE / GRANEL)">
+                <span>Carreta Silo (POTE / GRANEL)</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- PALETES CIF (Exibido apenas para Carga Seca) -->
+        <div id="secao-paletes-cif" style="display: none;">
+          <h3>📦 Paletes</h3>
+          <div class="paletes-container">
+            <p style="font-weight: 600; margin-bottom: 15px;">Trouxe Paletes para Carregamento?</p>
+            <div class="paletes-opcoes">
+              <label class="paletes-label">
+                <input type="radio" name="cif_paletes_opcao" value="SIM" onchange="alternarQtdPaletesCIF(true)">
+                <span>SIM</span>
+              </label>
+              <div id="container-qtd-paletes-cif" class="input-group" style="display: none; margin-left: 20px; margin-bottom: 10px;">
+                <label for="cif-qtd-paletes">Quantidade:</label>
+                <input type="number" id="cif-qtd-paletes" placeholder="0" min="1" max="999">
+              </div>
+            </div>
+            <div class="paletes-opcoes">
+              <label class="paletes-label">
+                <input type="radio" name="cif_paletes_opcao" value="NAO" onchange="alternarQtdPaletesCIF(false)">
+                <span>NÃO</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
         <!-- TIPO DE CARGA E SEGMENTO -->
         <h3>📌 Tipo de Carga e Segmento</h3>
         <div class="input-group">
@@ -520,7 +566,7 @@
           </select>
         </div>
 
-        <!-- NOVO CAMPO: SELEÇÃO DA TRANSPORTADORA (Exibido se Segmento = Transportador) -->
+        <!-- SELEÇÃO DA TRANSPORTADORA (Exibido se Segmento = Transportador) -->
         <div class="input-group" id="container-cif-transportadora" style="display: none;">
           <label for="cif-transportadora">Selecione a Transportadora:</label>
           <select id="cif-transportadora">
