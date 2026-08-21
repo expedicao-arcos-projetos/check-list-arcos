@@ -138,6 +138,21 @@ async function verificarAcesso() {
 
 function irParaSelecaoCarregamento() {
   ocultarTodas();
+  limparTodosErros();
+
+  // 1. Desmarca qualquer opção de carregamento (FOB / CIF) previamente marcada
+  const radiosCarregamento = document.querySelectorAll('input[name="modelo_carregamento"]');
+  radiosCarregamento.forEach(radio => radio.checked = false);
+
+  // 2. Limpa o valor digitado nos campos de pedido
+  if (id('pedido-fob-input')) id('pedido-fob-input').value = '';
+  if (id('pedido-cif-input')) id('pedido-cif-input').value = '';
+
+  // 3. Oculta os containers de pedido
+  if (id('container-pedido-fob')) id('container-pedido-fob').style.display = 'none';
+  if (id('container-pedido-cif')) id('container-pedido-cif').style.display = 'none';
+
+  // 4. Exibe a tela de seleção limpa
   id('step-tipo-carregamento').classList.remove('hidden');
 }
 
