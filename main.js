@@ -708,4 +708,21 @@ function ocultarTodas() {
   window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
 }
 
+function alternarCampoTransportadora() {
+  const segmento = id('cif-segmento')?.value;
+  const containerTransp = id('container-cif-transportadora');
+  const selectTransp = id('cif-transportadora');
+
+  if (segmento === 'Transportador') {
+    if (containerTransp) containerTransp.style.display = 'block';
+    if (selectTransp) selectTransp.setAttribute('required', 'required');
+  } else {
+    if (containerTransp) containerTransp.style.display = 'none';
+    if (selectTransp) {
+      selectTransp.value = '';
+      selectTransp.removeAttribute('required');
+    }
+  }
+}
+
 document.addEventListener('DOMContentLoaded', irParaCPF);
