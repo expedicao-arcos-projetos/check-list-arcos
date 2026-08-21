@@ -66,6 +66,22 @@ function limparTodosErros() {
   });
 }
 
+// AUXILIAR PARA RESETAR CAMPOS READONLY
+function resetarCamposReadOnly() {
+  const inputPedidoFOB = id('pedido');
+  const inputPedidoCIF = id('cif-pedido');
+
+  if (inputPedidoFOB) {
+    inputPedidoFOB.readOnly = false;
+    inputPedidoFOB.value = '';
+  }
+
+  if (inputPedidoCIF) {
+    inputPedidoCIF.readOnly = false;
+    inputPedidoCIF.value = '';
+  }
+}
+
 document.addEventListener('input', (e) => { if (e.target.id) removerErroInline(e.target.id); });
 document.addEventListener('change', (e) => { if (e.target.id) removerErroInline(e.target.id); });
 
@@ -113,7 +129,7 @@ async function verificarAcesso() {
     const response = await fetch(`${WORKER_URL}/api/verificar-cpf`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cpf })
+      body: JSON.stringify({ cpf: cpfAtual })
     });
 
     const resultado = await response.json();
@@ -138,6 +154,7 @@ async function verificarAcesso() {
 function irParaSelecaoCarregamento() {
   ocultarTodas();
   limparTodosErros();
+  resetarCamposReadOnly();
 
   const radiosCarregamento = document.querySelectorAll('input[name="modelo_carregamento"]');
   radiosCarregamento.forEach(radio => radio.checked = false);
@@ -219,7 +236,6 @@ function preencherUltimoCarregamento() {
   if (id('cnh') && dados.cnh) id('cnh').value = dados.cnh;
   if (id('placa') && dados.placa) id('placa').value = dados.placa;
   if (id('eixos') && dados.eixos) id('eixos').value = dados.eixos;
-  if (id('pedido')) id('pedido').value = '';
 
   if (dados.tipo_veiculo) {
     const radioTipo = document.querySelector(`input[name="tipo_veiculo"][value="${dados.tipo_veiculo}"]`);
@@ -447,6 +463,7 @@ async function gerarJSONeToken() {
 
     if (resultado.sucesso) {
       id('form-inspecao').reset();
+      resetarCamposReadOnly();
       id('token-gerado').innerText = resultado.id_inspecao;
       irParaSucesso();
     } else {
@@ -530,7 +547,6 @@ async function salvarInspecaoCIF() {
   if (!validarPedido(pedido)) return mostrarErroInline('cif-pedido', 'Número do pedido inválido');
   if (!validarEixos(eixos)) return mostrarErroInline('cif-eixos', 'Quantidade de eixos inválida');
 
-  // Validação Tipo de Veículo e Paletes (CIF)
   const tipoVeiculo = document.querySelector('input[name="cif_tipo_veiculo"]:checked')?.value;
   if (!tipoVeiculo) return mostrarErroInline('step-inspecao-cif', 'Selecione o Tipo de Veículo!');
 
@@ -588,6 +604,7 @@ async function salvarInspecaoCIF() {
     if (resultado.sucesso) {
       const formCIF = id('form-inspecao-cif');
       if (formCIF) formCIF.reset();
+      resetarCamposReadOnly();
 
       id('token-gerado').innerText = resultado.id_inspecao;
       irParaSucesso();
@@ -601,7 +618,7 @@ async function salvarInspecaoCIF() {
 }
 
 // ============================================
-// NAVEGAÇÃO E RESET
+// NAVEGAÇÃO E RESET DE FORMULÁRIOS
 // ============================================
 
 function copiarToken() {
@@ -613,6 +630,8 @@ function copiarToken() {
 
 function voltarPaginaAnterior() {
   limparTodosErros();
+  resetarCamposReadOnly();
+
   const etapaCarregamentoVisivel = !id('step-tipo-carregamento').classList.contains('hidden');
   const etapaInspecaoVisivel = !id('step-inspecao').classList.contains('hidden');
   const etapaInspecaoCIFVisivel = !id('step-inspecao-cif').classList.contains('hidden');
@@ -634,6 +653,8 @@ function irParaCPF() {
   if (id('form-prova')) id('form-prova').reset();
   if (id('form-inspecao')) id('form-inspecao').reset();
   if (id('form-inspecao-cif')) id('form-inspecao-cif').reset();
+
+  resetarCamposReadOnly();
 
   const radiosCarregamento = document.querySelectorAll('input[name="modelo_carregamento"]');
   radiosCarregamento.forEach(radio => radio.checked = false);
