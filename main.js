@@ -66,7 +66,6 @@ function limparTodosErros() {
   });
 }
 
-// Remove o erro automaticamente ao digitar ou alterar
 document.addEventListener('input', (e) => { if (e.target.id) removerErroInline(e.target.id); });
 document.addEventListener('change', (e) => { if (e.target.id) removerErroInline(e.target.id); });
 
@@ -140,19 +139,14 @@ function irParaSelecaoCarregamento() {
   ocultarTodas();
   limparTodosErros();
 
-  // 1. Desmarca qualquer opção de carregamento (FOB / CIF) previamente marcada
   const radiosCarregamento = document.querySelectorAll('input[name="modelo_carregamento"]');
   radiosCarregamento.forEach(radio => radio.checked = false);
 
-  // 2. Limpa o valor digitado nos campos de pedido
   if (id('pedido-fob-input')) id('pedido-fob-input').value = '';
   if (id('pedido-cif-input')) id('pedido-cif-input').value = '';
-
-  // 3. Oculta os containers de pedido
   if (id('container-pedido-fob')) id('container-pedido-fob').style.display = 'none';
   if (id('container-pedido-cif')) id('container-pedido-cif').style.display = 'none';
 
-  // 4. Exibe a tela de seleção limpa
   id('step-tipo-carregamento').classList.remove('hidden');
 }
 
@@ -210,16 +204,13 @@ function confirmarTipoCarregamento() {
 }
 
 // ============================================
-// AUTO-PREENCHIMENTO DO ÚLTIMO CARREGAMENTO
+// AUTO-PREENCHIMENTO DO ÚLTIMO CARREGAMENTO (FOB)
 // ============================================
 
 function preencherUltimoCarregamento() {
   const telefoneMotorista = dadosMotoristaAtual?.telefone || ultimaInspecaoAtual?.telefone || '';
 
-  if (id('telefone') && telefoneMotorista) {
-    id('telefone').value = telefoneMotorista;
-  }
-
+  if (id('telefone') && telefoneMotorista) id('telefone').value = telefoneMotorista;
   if (!ultimaInspecaoAtual) return;
 
   const dados = ultimaInspecaoAtual;
@@ -238,21 +229,10 @@ function preencherUltimoCarregamento() {
     }
   }
 
-  if (id('sinalizacao') && dados.sinalizacao) id('sinalizacao').value = dados.sinalizacao;
-  if (id('pneus') && dados.pneus) id('pneus').value = dados.pneus;
-  if (id('carroceria') && dados.carroceria) id('carroceria').value = dados.carroceria;
-  if (id('cinto') && dados.cinto) id('cinto').value = dados.cinto;
-  if (id('farois') && dados.farois) id('farois').value = dados.farois;
-  if (id('alarme_re') && dados.alarme_re) id('alarme_re').value = dados.alarme_re;
-  if (id('vazamentos') && dados.vazamentos) id('vazamentos').value = dados.vazamentos;
-  if (id('calcos') && dados.calcos) id('calcos').value = dados.calcos;
-  if (id('tampa_silo') && dados.tampa_silo) id('tampa_silo').value = dados.tampa_silo;
-
-  if (id('epi_capacete') && dados.epi_capacete) id('epi_capacete').value = dados.epi_capacete;
-  if (id('epi_colete') && dados.epi_colete) id('epi_colete').value = dados.epi_colete;
-  if (id('epi_oculos') && dados.epi_oculos) id('epi_oculos').value = dados.epi_oculos;
-  if (id('epi_botina') && dados.epi_botina) id('epi_botina').value = dados.epi_botina;
-  if (id('epi_luvas') && dados.epi_luvas) id('epi_luvas').value = dados.epi_luvas;
+  const itensCarga = ['sinalizacao', 'pneus', 'carroceria', 'cinto', 'farois', 'alarme_re', 'vazamentos', 'calcos', 'tampa_silo', 'epi_capacete', 'epi_colete', 'epi_oculos', 'epi_botina', 'epi_luvas'];
+  itensCarga.forEach(item => {
+    if (id(item) && dados[item]) id(item).value = dados[item];
+  });
 
   if (dados.paletes_opcao) {
     const radioPalete = document.querySelector(`input[name="paletes_opcao"][value="${dados.paletes_opcao}"]`);
@@ -349,22 +329,15 @@ async function concluirIntegracao() {
 
 async function salvarMotoristaComProva(nome, rg, telefone, placa, respostas) {
   const aceiteVideo = id('aceite-video').checked;
-
   try {
     await fetch(`${WORKER_URL}/api/salvar-motorista`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        cpf: cpfAtual,
-        nome, rg, telefone, placa,
-        aceite_video: aceiteVideo,
-        aceite_ppae: true, aceite_fob: true, aceite_lgpd: true,
+        cpf: cpfAtual, nome, rg, telefone, placa,
+        aceite_video: aceiteVideo, aceite_ppae: true, aceite_fob: true, aceite_lgpd: true,
         data_aceite: new Date().toISOString(),
-        prova_respondida: {
-          data: new Date().toISOString(),
-          respostas,
-          resultado: 'aprovado'
-        }
+        prova_respondida: { data: new Date().toISOString(), respostas, resultado: 'aprovado' }
       })
     });
   } catch (erro) {
@@ -373,20 +346,16 @@ async function salvarMotoristaComProva(nome, rg, telefone, placa, respostas) {
 }
 
 // ============================================
-// CONTROLE DE TIPO DE VEÍCULO E PALETES
+// CONTROLE DE TIPO DE VEÍCULO E PALETES (FOB)
 // ============================================
 
 function mostrarQuantidadePaletes() {
-  const container = id('quantidade-paletes-container');
-  if (container) container.style.display = 'block';
+  if (id('quantidade-paletes-container')) id('quantidade-paletes-container').style.display = 'block';
 }
 
 function ocultarQuantidadePaletes() {
-  const container = id('quantidade-paletes-container');
-  if (container) container.style.display = 'none';
-
-  const inputQtd = id('quantidade-paletes');
-  if (inputQtd) inputQtd.value = '';
+  if (id('quantidade-paletes-container')) id('quantidade-paletes-container').style.display = 'none';
+  if (id('quantidade-paletes')) id('quantidade-paletes').value = '';
 }
 
 function atualizarCamposPorTipoVeiculo() {
@@ -398,17 +367,11 @@ function atualizarCamposPorTipoVeiculo() {
 
   if (tipoVeiculo === 'CARGA_SECA') {
     if (containerTampaSilo) containerTampaSilo.style.display = 'none';
-    if (selectTampaSilo) {
-      selectTampaSilo.value = 'NA';
-      selectTampaSilo.removeAttribute('required');
-    }
+    if (selectTampaSilo) { selectTampaSilo.value = 'NA'; selectTampaSilo.removeAttribute('required'); }
     if (secaoPaletes) secaoPaletes.style.display = 'block';
   } else if (tipoVeiculo === 'CARRETA_SILO') {
     if (containerTampaSilo) containerTampaSilo.style.display = 'flex';
-    if (selectTampaSilo) {
-      selectTampaSilo.value = '';
-      selectTampaSilo.setAttribute('required', 'required');
-    }
+    if (selectTampaSilo) { selectTampaSilo.value = ''; selectTampaSilo.setAttribute('required', 'required'); }
     if (secaoPaletes) secaoPaletes.style.display = 'none';
     radiosPaletes.forEach(radio => radio.checked = false);
     ocultarQuantidadePaletes();
@@ -416,9 +379,7 @@ function atualizarCamposPorTipoVeiculo() {
 }
 
 document.addEventListener('change', function(e) {
-  if (e.target && e.target.name === 'tipo_veiculo') {
-    atualizarCamposPorTipoVeiculo();
-  }
+  if (e.target && e.target.name === 'tipo_veiculo') atualizarCamposPorTipoVeiculo();
 });
 
 // ============================================
@@ -465,29 +426,14 @@ async function gerarJSONeToken() {
   }
 
   const inspecao = {
-    nome: id('nome').value.trim(),
-    cnh: id('cnh').value.trim(),
-    telefone: telefoneDigitado,
-    placa: placaDigitada,
-    pedido: pedidoDigitado,
-    eixos: eixosDigitados,
-    tipo_veiculo: tipoVeiculo,
-    sinalizacao: id('sinalizacao').value,
-    pneus: id('pneus').value,
-    carroceria: id('carroceria').value,
-    cinto: id('cinto').value,
-    farois: id('farois').value,
-    alarme_re: id('alarme_re').value,
-    vazamentos: id('vazamentos').value,
-    calcos: id('calcos').value,
-    tampa_silo: valTampaSilo,
-    epi_capacete: id('epi_capacete').value,
-    epi_colete: id('epi_colete').value,
-    epi_oculos: id('epi_oculos').value,
-    epi_botina: id('epi_botina').value,
-    epi_luvas: id('epi_luvas').value,
-    paletes_opcao: paletesOpcao || 'NA',
-    paletes_quantidade: quantidadePaletes || ''
+    nome: id('nome').value.trim(), cnh: id('cnh').value.trim(), telefone: telefoneDigitado,
+    placa: placaDigitada, pedido: pedidoDigitado, eixos: eixosDigitados, tipo_veiculo: tipoVeiculo,
+    sinalizacao: id('sinalizacao').value, pneus: id('pneus').value, carroceria: id('carroceria').value,
+    cinto: id('cinto').value, farois: id('farois').value, alarme_re: id('alarme_re').value,
+    vazamentos: id('vazamentos').value, calcos: id('calcos').value, tampa_silo: valTampaSilo,
+    epi_capacete: id('epi_capacete').value, epi_colete: id('epi_colete').value, epi_oculos: id('epi_oculos').value,
+    epi_botina: id('epi_botina').value, epi_luvas: id('epi_luvas').value,
+    paletes_opcao: paletesOpcao || 'NA', paletes_quantidade: quantidadePaletes || ''
   };
 
   try {
@@ -513,7 +459,7 @@ async function gerarJSONeToken() {
 }
 
 // ============================================
-// ETAPA 3B: INSPEÇÃO CIF / FCA (32 ITENS)
+// ETAPA 3B: CONTROLE DE TIPO DE VEÍCULO, PALETES E TRANSPORTADORA (CIF)
 // ============================================
 
 function alternarCampoTransportadora() {
@@ -531,6 +477,28 @@ function alternarCampoTransportadora() {
       selectTransp.removeAttribute('required');
     }
   }
+}
+
+function atualizarCamposCIF() {
+  const tipoVeiculo = document.querySelector('input[name="cif_tipo_veiculo"]:checked')?.value;
+  const secaoPaletes = id('secao-paletes-cif');
+  const radiosPaletes = document.querySelectorAll('input[name="cif_paletes_opcao"]');
+
+  if (tipoVeiculo === 'CARGA_SECA') {
+    if (secaoPaletes) secaoPaletes.style.display = 'block';
+  } else {
+    if (secaoPaletes) secaoPaletes.style.display = 'none';
+    radiosPaletes.forEach(radio => radio.checked = false);
+    alternarQtdPaletesCIF(false);
+  }
+}
+
+function alternarQtdPaletesCIF(mostrar) {
+  const container = id('container-qtd-paletes-cif');
+  const inputQtd = id('cif-qtd-paletes');
+  
+  if (container) container.style.display = mostrar ? 'block' : 'none';
+  if (!mostrar && inputQtd) inputQtd.value = '';
 }
 
 async function salvarInspecaoCIF() {
@@ -562,6 +530,25 @@ async function salvarInspecaoCIF() {
   if (!validarPedido(pedido)) return mostrarErroInline('cif-pedido', 'Número do pedido inválido');
   if (!validarEixos(eixos)) return mostrarErroInline('cif-eixos', 'Quantidade de eixos inválida');
 
+  // Validação Tipo de Veículo e Paletes (CIF)
+  const tipoVeiculo = document.querySelector('input[name="cif_tipo_veiculo"]:checked')?.value;
+  if (!tipoVeiculo) return mostrarErroInline('step-inspecao-cif', 'Selecione o Tipo de Veículo!');
+
+  let paletesOpcao = 'N/A';
+  let paletesQtd = 'N/A';
+
+  if (tipoVeiculo === 'CARGA_SECA') {
+    paletesOpcao = document.querySelector('input[name="cif_paletes_opcao"]:checked')?.value;
+    if (!paletesOpcao) return mostrarErroInline('secao-paletes-cif', 'Selecione se trouxe paletes!');
+
+    if (paletesOpcao === 'SIM') {
+      paletesQtd = id('cif-qtd-paletes')?.value.trim();
+      if (!paletesQtd || paletesQtd <= 0) {
+        return mostrarErroInline('cif-qtd-paletes', 'Informe a quantidade de paletes!');
+      }
+    }
+  }
+
   if (!tipoChecklist) return mostrarErroInline('cif-tipo-checklist', 'Selecione o Tipo de Checklist CIP');
   if (!segmento) return mostrarErroInline('cif-segmento', 'Selecione o Segmento');
   if (segmento === 'Transportador' && !transportadora) {
@@ -570,6 +557,9 @@ async function salvarInspecaoCIF() {
 
   const inspecaoDados = {
     nome, cnh, telefone, placa, pedido, eixos,
+    tipo_veiculo: tipoVeiculo,
+    paletes_opcao: paletesOpcao,
+    paletes_quantidade: paletesQtd,
     data: new Date().toLocaleDateString('pt-BR'),
     tipo_checklist: tipoChecklist,
     segmento: segmento,
@@ -645,7 +635,6 @@ function irParaCPF() {
   if (id('form-inspecao')) id('form-inspecao').reset();
   if (id('form-inspecao-cif')) id('form-inspecao-cif').reset();
 
-  // Limpa campos da tela de tipo de carregamento
   const radiosCarregamento = document.querySelectorAll('input[name="modelo_carregamento"]');
   radiosCarregamento.forEach(radio => radio.checked = false);
   if (id('pedido-fob-input')) id('pedido-fob-input').value = '';
@@ -653,8 +642,10 @@ function irParaCPF() {
   if (id('container-pedido-fob')) id('container-pedido-fob').style.display = 'none';
   if (id('container-pedido-cif')) id('container-pedido-cif').style.display = 'none';
 
-  // Oculta caixa da transportadora ao resetar
+  // Reseta campos CIF Dinâmicos
   if (id('container-cif-transportadora')) id('container-cif-transportadora').style.display = 'none';
+  if (id('secao-paletes-cif')) id('secao-paletes-cif').style.display = 'none';
+  if (id('container-qtd-paletes-cif')) id('container-qtd-paletes-cif').style.display = 'none';
 
   ocultarQuantidadePaletes();
   alternarBloqueioProva();
@@ -686,7 +677,6 @@ function irParaInspecao(numeroPedido) {
   id('step-inspecao').classList.remove('hidden');
   preencherUltimoCarregamento();
 
-  // Preenche o pedido vindo da seleção com trava de edição
   if (numeroPedido && id('pedido')) {
     id('pedido').value = numeroPedido;
     id('pedido').readOnly = true;
@@ -709,14 +699,13 @@ function irParaInspecaoCIF(numeroPedido) {
   if (id('cif-placa')) id('cif-placa').value = placa;
   if (id('cif-eixos')) id('cif-eixos').value = eixos;
 
-  // Preenche o pedido CIF vindo da seleção
   if (numeroPedido && id('cif-pedido')) {
     id('cif-pedido').value = numeroPedido;
     id('cif-pedido').readOnly = true;
   }
 
-  // Oculta transportadora no inicio
   alternarCampoTransportadora();
+  atualizarCamposCIF();
 
   id('step-inspecao-cif').classList.remove('hidden');
 }
