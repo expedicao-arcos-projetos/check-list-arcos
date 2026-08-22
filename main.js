@@ -652,16 +652,18 @@ function irParaInspecao(numeroPedido) {
 function irParaInspecaoCIF(numeroPedido) {
   ocultarTodas();
   limparTodosErros();
-  preencherUltimoCIF(); // Preenche dados da última inspeção
+  
+  // Mostra a tela PRIMEIRO
+  id('step-inspecao-cif').classList.remove('hidden');
 
   if (numeroPedido && id('cif-pedido')) {
     id('cif-pedido').value = numeroPedido;
     id('cif-pedido').readOnly = true;
   }
 
-  id('step-inspecao-cif').classList.remove('hidden');
-
+  // Depois de mostrar, preenche os dados
   setTimeout(() => {
+    preencherUltimoCIF();
     alternarCampoTransportadora();
     atualizarCamposCIF();
   }, 100);
