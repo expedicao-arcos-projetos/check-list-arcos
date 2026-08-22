@@ -383,6 +383,15 @@ function preencherUltimoCIF() {
     // NÃO preenche pedido
     // if (id('cif-pedido')) id('cif-pedido').value = dados.pedido || '';
     
+    // Preenche os 32 itens CIF (SIM/NÃO/N/A)
+    for (let i = 1; i <= 32; i++) {
+      const itemId = `cif-item-${i}`;
+      const itemEl = id(itemId);
+      if (itemEl && dados[`item_${i}`]) {
+        itemEl.value = dados[`item_${i}`];
+      }
+    }
+    
     // Paletes CIF (se tiver)
     if (dados.paletes_opcao && dados.paletes_opcao !== 'N/A') {
       const radioPalete = document.querySelector(`input[name="cif_paletes_opcao"][value="${dados.paletes_opcao}"]`);
