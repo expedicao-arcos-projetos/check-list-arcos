@@ -331,11 +331,69 @@ document.addEventListener('change', function(e) {
 function preencherUltimoCarregamento() {
   if (ultimaInspecaoAtual) {
     const dados = ultimaInspecaoAtual;
+    
+    // Dados básicos
     if (id('nome')) id('nome').value = dados.nome || '';
     if (id('cnh')) id('cnh').value = dados.cnh || '';
     if (id('placa')) id('placa').value = dados.placa || '';
     if (id('telefone')) id('telefone').value = dados.telefone || '';
     if (id('eixos')) id('eixos').value = dados.eixos || '';
+    
+    // NÃO preenche pedido - comentado propositalmente
+    // if (id('pedido')) id('pedido').value = dados.pedido || '';
+    
+    // Itens de Inspeção (conformes, não conformes, N/A)
+    const itensInspecao = [
+      'sinalizacao', 'pneus', 'carroceria', 'cinto', 'farois', 
+      'alarme_re', 'vazamentos', 'calcos', 'tampa_silo',
+      'epi_capacete', 'epi_colete', 'epi_oculos', 'epi_botina', 'epi_luvas'
+    ];
+    
+    itensInspecao.forEach(item => {
+      if (dados[item] && id(item)) {
+        id(item).value = dados[item];
+      }
+    });
+    
+    // Paletes (se tiver)
+    if (dados.paletes_opcao) {
+      const radioPalete = document.querySelector(`input[name="paletes_opcao"][value="${dados.paletes_opcao}"]`);
+      if (radioPalete) {
+        radioPalete.checked = true;
+        if (dados.paletes_opcao === 'SIM') {
+          mostrarQuantidadePaletes();
+          if (id('quantidade-paletes')) id('quantidade-paletes').value = dados.paletes_quantidade || '';
+        }
+      }
+    }
+  }
+}
+
+function preencherUltimoCIF() {
+  if (ultimaInspecaoAtual) {
+    const dados = ultimaInspecaoAtual;
+    
+    // Dados básicos
+    if (id('cif-nome')) id('cif-nome').value = dados.nome || '';
+    if (id('cif-cnh')) id('cif-cnh').value = dados.cnh || '';
+    if (id('cif-telefone')) id('cif-telefone').value = dados.telefone || '';
+    if (id('cif-placa')) id('cif-placa').value = dados.placa || '';
+    if (id('cif-eixos')) id('cif-eixos').value = dados.eixos || '';
+    
+    // NÃO preenche pedido
+    // if (id('cif-pedido')) id('cif-pedido').value = dados.pedido || '';
+    
+    // Paletes CIF (se tiver)
+    if (dados.paletes_opcao && dados.paletes_opcao !== 'N/A') {
+      const radioPalete = document.querySelector(`input[name="cif_paletes_opcao"][value="${dados.paletes_opcao}"]`);
+      if (radioPalete) {
+        radioPalete.checked = true;
+        if (dados.paletes_opcao === 'SIM') {
+          alternarQtdPaletesCIF(true);
+          if (id('cif-qtd-paletes')) id('cif-qtd-paletes').value = dados.paletes_quantidade || '';
+        }
+      }
+    }
   }
 }
 
@@ -585,14 +643,7 @@ function irParaInspecao(numeroPedido) {
 function irParaInspecaoCIF(numeroPedido) {
   ocultarTodas();
   limparTodosErros();
-
-  if (ultimaInspecaoAtual) {
-    if (id('cif-nome')) id('cif-nome').value = ultimaInspecaoAtual.nome || '';
-    if (id('cif-cnh')) id('cif-cnh').value = ultimaInspecaoAtual.cnh || '';
-    if (id('cif-telefone')) id('cif-telefone').value = ultimaInspecaoAtual.telefone || '';
-    if (id('cif-placa')) id('cif-placa').value = ultimaInspecaoAtual.placa || '';
-    if (id('cif-eixos')) id('cif-eixos').value = ultimaInspecaoAtual.eixos || '';
-  }
+  preencherUltimoCIF(); // Preenche dados da última inspeção
 
   if (numeroPedido && id('cif-pedido')) {
     id('cif-pedido').value = numeroPedido;
@@ -601,7 +652,6 @@ function irParaInspecaoCIF(numeroPedido) {
 
   id('step-inspecao-cif').classList.remove('hidden');
 
-  // Depois de mostrar, atualiza os campos
   setTimeout(() => {
     alternarCampoTransportadora();
     atualizarCamposCIF();
