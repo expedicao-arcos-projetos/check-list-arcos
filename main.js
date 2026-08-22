@@ -581,11 +581,17 @@ async function salvarInspecaoCIF() {
   let qtdPalete = 'N/A';
 
   if (tipoVeiculoCIF === 'CARGA_SECA') {
-    trouxePalete = document.querySelector('input[name="cif_paletes_opcao"]:checked')?.value;
-    if (!trouxePalete) return mostrarErroInline('secao-paletes-cif', 'Selecione paletes');
-    if (trouxePalete === 'SIM') {
+    let paleteSelecionado = document.querySelector('input[name="cif_paletes_opcao"]:checked')?.value;
+    if (!paleteSelecionado) return mostrarErroInline('secao-paletes-cif', 'Selecione paletes');
+    
+    // Normaliza para SIM ou NAO
+    if (paleteSelecionado === 'SIM') {
+      trouxePalete = 'SIM';
       qtdPalete = id('cif-qtd-paletes')?.value.trim();
       if (!qtdPalete) return mostrarErroInline('cif-qtd-paletes', 'Informe quantidade');
+    } else if (paleteSelecionado === 'NAO' || paleteSelecionado === 'NÃO') {
+      trouxePalete = 'NAO';
+      qtdPalete = 'N/A';
     }
   }
 
@@ -600,7 +606,14 @@ async function salvarInspecaoCIF() {
   for (let i = 1; i <= 32; i++) {
     const val = id(`cif-item-${i}`)?.value;
     if (!val) return mostrarErroInline(`cif-item-${i}`, `Selecione item ${i}`);
-    inspecaoDados[`item_${i}`] = val;
+    
+    // Normaliza os valores dos itens
+    let valorNormalizado = val;
+    if (val === 'NAO' || val === 'NÃO') valorNormalizado = 'NAO';
+    if (val === 'SIM') valorNormalizado = 'SIM';
+    if (val === 'N/A' || val === 'NA') valorNormalizado = 'N/A';
+    
+    inspecaoDados[`item_${i}`] = valorNormalizado;
   }
 
   try {
