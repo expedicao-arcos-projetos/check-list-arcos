@@ -393,6 +393,9 @@ function preencherUltimoCarregamento() {
 }
 
 function preencherUltimoCIF() {
+  console.log('>>> preencherUltimoCIF INICIADA');
+  console.log('ultimaInspecaoAtual:', ultimaInspecaoAtual);
+  
   if (ultimaInspecaoAtual) {
     const dados = ultimaInspecaoAtual;
     
@@ -403,29 +406,43 @@ function preencherUltimoCIF() {
     if (id('cif-placa')) id('cif-placa').value = dados.placa || '';
     if (id('cif-eixos')) id('cif-eixos').value = dados.eixos || '';
     
-    // NÃO preenche pedido
-    // if (id('cif-pedido')) id('cif-pedido').value = dados.pedido || '';
+    // Preenche tipo checklist, segmento e transportadora
+    if (id('cif-tipo-checklist')) id('cif-tipo-checklist').value = dados.tipo_checklist || '';
+    if (id('cif-segmento')) id('cif-segmento').value = dados.segmento || '';
+    if (id('cif-transportadora')) id('cif-transportadora').value = dados.transportadora || '';
     
-    // Preenche os 32 itens CIF (SIM/NÃO/N/A)
-    for (let i = 1; i <= 32; i++) {
-      const itemId = `cif-item-${i}`;
-      const itemEl = id(itemId);
-      if (itemEl && dados[`item_${i}`]) {
-        itemEl.value = dados[`item_${i}`];
-      }
+    // Preenche tipo de veículo CIF
+    if (dados.tipo_veiculo_cif) {
+      const radioTipo = document.querySelector(`input[name="cif_tipo_veiculo"][value="${dados.tipo_veiculo_cif}"]`);
+      if (radioTipo) radioTipo.checked = true;
     }
     
-    // Paletes CIF (se tiver)
-    if (dados.paletes_opcao && dados.paletes_opcao !== 'N/A') {
-      const radioPalete = document.querySelector(`input[name="cif_paletes_opcao"][value="${dados.paletes_opcao}"]`);
+    // Preenche trouxe palete (SIM/NÃO)
+    if (dados.trouxe_palete && dados.trouxe_palete !== 'N/A') {
+      const radioPalete = document.querySelector(`input[name="cif_paletes_opcao"][value="${dados.trouxe_palete}"]`);
       if (radioPalete) {
         radioPalete.checked = true;
-        if (dados.paletes_opcao === 'SIM') {
+        if (dados.trouxe_palete === 'SIM') {
           alternarQtdPaletesCIF(true);
-          if (id('cif-qtd-paletes')) id('cif-qtd-paletes').value = dados.paletes_quantidade || '';
+          if (id('cif-qtd-paletes')) id('cif-qtd-paletes').value = dados.quantidade_palete || '';
         }
       }
     }
+    
+    // Preenche os 32 itens CIF
+    for (let i = 1; i <= 32; i++) {
+      const itemId = `cif-item-${i}`;
+      const itemEl = id(itemId);
+      const valor = dados[`item_${i}`];
+      
+      if (itemEl && valor) {
+        itemEl.value = valor;
+      }
+    }
+    
+    console.log('preencherUltimoCIF FINALIZADA');
+  } else {
+    console.log('ultimaInspecaoAtual está vazio/null');
   }
 }
 
@@ -547,6 +564,7 @@ async function salvarInspecaoCIF() {
   const tipoChecklist = id('cif-tipo-checklist')?.value;
   const segmento = id('cif-segmento')?.value;
   const transportadora = segmento === 'Transportador' ? id('cif-transportadora')?.value : 'N/A';
+  const tipoVeiculoCIF = document.querySelector('input[name="cif_tipo_veiculo"]:checked')?.value;
 
   if (!nome) return mostrarErroInline('cif-nome', 'Informe nome');
   if (!cnh) return mostrarErroInline('cif-cnh', 'Informe CNH');
@@ -556,27 +574,27 @@ async function salvarInspecaoCIF() {
   if (!validarEixos(eixos)) return mostrarErroInline('cif-eixos', 'Eixos inválido');
   if (!tipoChecklist) return mostrarErroInline('cif-tipo-checklist', 'Selecione checklist');
   if (!segmento) return mostrarErroInline('cif-segmento', 'Selecione segmento');
+  if (!tipoVeiculoCIF) return mostrarErroInline('step-inspecao-cif', 'Selecione tipo veículo');
   if (segmento === 'Transportador' && !transportadora) return mostrarErroInline('cif-transportadora', 'Selecione transportadora');
 
-  let paletesOpcao = 'N/A';
-  let paletesQtd = 'N/A';
-  const tipoVeiculo = document.querySelector('input[name="cif_tipo_veiculo"]:checked')?.value;
+  let trouxePalete = 'N/A';
+  let qtdPalete = 'N/A';
 
-  if (!tipoVeiculo) return mostrarErroInline('step-inspecao-cif', 'Selecione tipo veículo');
-
-  if (tipoVeiculo === 'CARGA_SECA') {
-    paletesOpcao = document.querySelector('input[name="cif_paletes_opcao"]:checked')?.value;
-    if (!paletesOpcao) return mostrarErroInline('secao-paletes-cif', 'Selecione paletes');
-    if (paletesOpcao === 'SIM') {
-      paletesQtd = id('cif-qtd-paletes')?.value.trim();
-      if (!paletesQtd) return mostrarErroInline('cif-qtd-paletes', 'Informe quantidade');
+  if (tipoVeiculoCIF === 'CARGA_SECA') {
+    trouxePalete = document.querySelector('input[name="cif_paletes_opcao"]:checked')?.value;
+    if (!trouxePalete) return mostrarErroInline('secao-paletes-cif', 'Selecione paletes');
+    if (trouxePalete === 'SIM') {
+      qtdPalete = id('cif-qtd-paletes')?.value.trim();
+      if (!qtdPalete) return mostrarErroInline('cif-qtd-paletes', 'Informe quantidade');
     }
   }
 
   const inspecaoDados = {
     nome, cnh, placa, pedido, eixos, telefone,
     tipo_checklist: tipoChecklist, segmento, transportadora,
-    paletes_opcao: paletesOpcao, paletes_quantidade: paletesQtd
+    tipo_veiculo_cif: tipoVeiculoCIF,
+    trouxe_palete: trouxePalete,
+    quantidade_palete: qtdPalete
   };
 
   for (let i = 1; i <= 32; i++) {
