@@ -724,11 +724,61 @@ async function salvarInspecaoCIF() {
  
 function copiarToken() {
   const token = id('token-gerado').innerText;
+  const tokenContainer = id('token-gerado')?.parentElement;
+  
   navigator.clipboard.writeText(token).then(() => {
-    alert('📋 Código copiado!');
+    // ✅ Mostrar mensagem embaixo do token
+    mostrarMensagemCopia(tokenContainer, '✅ Código copiado!', 'sucesso');
   }).catch(() => {
-    alert('Erro ao copiar. Use manualmente: ' + token);
+    // ❌ Mostrar erro
+    mostrarMensagemCopia(tokenContainer, '❌ Erro ao copiar. Use manualmente: ' + token, 'erro');
   });
+}
+ 
+// ✅ Função auxiliar para mostrar mensagem embaixo do token
+function mostrarMensagemCopia(container, mensagem, tipo) {
+  // Remover mensagem anterior se existir
+  const mensagemAnterior = container?.querySelector('.msg-copia');
+  if (mensagemAnterior) mensagemAnterior.remove();
+  
+  // Criar novo elemento de mensagem
+  const msgElement = document.createElement('div');
+  msgElement.className = `msg-copia msg-${tipo}`;
+  msgElement.textContent = mensagem;
+  msgElement.style.cssText = `
+    margin-top: 10px;
+    padding: 10px 15px;
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: center;
+    animation: fadeInOut 0.3s ease-in;
+    ${tipo === 'sucesso' ? 'background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;' : 'background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;'}
+  `;
+  
+  container?.appendChild(msgElement);
+  
+  // Remover após 3 segundos
+  setTimeout(() => {
+    msgElement.style.animation = 'fadeOutUp 0.3s ease-out';
+    setTimeout(() => msgElement.remove(), 300);
+  }, 3000);
+}
+ 
+// ✅ Adicionar CSS para animações
+if (!document.querySelector('style[data-msg-copia]')) {
+  const style = document.createElement('style');
+  style.setAttribute('data-msg-copia', 'true');
+  style.textContent = `
+    @keyframes fadeInOut {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeOutUp {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-5px); }
+    }
+  `;
+  document.head.appendChild(style);
 }
  
 function voltarPaginaAnterior() {
