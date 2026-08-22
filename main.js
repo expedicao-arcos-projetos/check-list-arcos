@@ -433,11 +433,13 @@ function preencherUltimoCarregamento() {
   if (id('nome')) id('nome').value = dadosCadastroMotorista.nome || '';
   if (id('placa')) id('placa').value = dadosCadastroMotorista.placa || '';
   if (id('telefone')) id('telefone').value = dadosCadastroMotorista.telefone || '';
-  if (id('eixos')) id('eixos').value = dadosCadastroMotorista.eixos || '';
  
-  // ✅ PRIORIDADE 2: Se tiver última inspeção, sobrescreve apenas os campos de inspeção
+  // ✅ PRIORIDADE 2: Se tiver última inspeção, preenche EIXOS e ITENS
   if (ultimaInspecaoAtual) {
     const dados = ultimaInspecaoAtual;
+    
+    // Eixos vem da última inspeção
+    if (id('eixos') && dados.eixos) id('eixos').value = dados.eixos;
     
     // CNH pode vir da última inspeção
     if (id('cnh') && dados.cnh) id('cnh').value = dados.cnh;
@@ -476,11 +478,13 @@ function preencherUltimoCIF() {
   if (id('cif-nome')) id('cif-nome').value = dadosCadastroMotorista.nome || '';
   if (id('cif-placa')) id('cif-placa').value = dadosCadastroMotorista.placa || '';
   if (id('cif-telefone')) id('cif-telefone').value = dadosCadastroMotorista.telefone || '';
-  if (id('cif-eixos')) id('cif-eixos').value = dadosCadastroMotorista.eixos || '';
  
-  // ✅ PRIORIDADE 2: Se tiver última inspeção, sobrescreve apenas os campos de inspeção
+  // ✅ PRIORIDADE 2: Se tiver última inspeção, preenche EIXOS e ITENS
   if (ultimaInspecaoAtual) {
     const dados = ultimaInspecaoAtual;
+    
+    // Eixos vem da última inspeção
+    if (id('cif-eixos') && dados.eixos) id('cif-eixos').value = dados.eixos;
     
     // CNH pode vir da última inspeção
     if (id('cif-cnh') && dados.cnh) id('cif-cnh').value = dados.cnh;
