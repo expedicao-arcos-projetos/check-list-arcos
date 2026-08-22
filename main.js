@@ -47,6 +47,34 @@ function debugLog(mensagem, dados = null) {
   console.log(`[DEBUG] ${mensagem}`, dados || '');
 }
  
+function preencherSelectComForca(elementId, valor) {
+  const el = id(elementId);
+  if (!el) return false;
+  
+  // Tentar preenchimento direto
+  el.value = valor;
+  
+  // Se o SELECT não reconhecer, procura pela opção existente
+  if (!el.value && el.tagName === 'SELECT') {
+    const opcoes = Array.from(el.options).map(opt => opt.value);
+    debugLog(`Opções disponíveis em ${elementId}:`, opcoes);
+    
+    // Se a opção não existe, tenta criar
+    if (!opcoes.includes(valor)) {
+      const novaOpcao = document.createElement('option');
+      novaOpcao.value = valor;
+      novaOpcao.text = valor;
+      el.appendChild(novaOpcao);
+      debugLog(`Opção ${valor} adicionada ao SELECT ${elementId}`);
+    }
+    
+    // Tenta novamente
+    el.value = valor;
+  }
+  
+  return el.value === valor;
+}
+ 
 function mostrarErroInline(elementId, mensagem) {
   const elemento = id(elementId);
   if (!elemento) return;
@@ -461,9 +489,17 @@ function preencherUltimoCarregamento() {
     ];
     
     itensInspecao.forEach(item => {
-      // ✅ CORRIGIDO: Agora preenche SIM, NÃO e N/A
-      if (id(item) && dados[item] != null) {
-        id(item).value = dados[item];
+      // ✅ CORRIGIDO: Usa função com força para garantir preenchimento de N/A
+      const valor = dados[item];
+      
+      if (valor != null && valor !== '') {
+        const preencheu = preencherSelectComForca(item, valor);
+        if (!preencheu) {
+          debugLog(`Falha ao preencher ${item} com ${valor}`);
+        }
+      } else {
+        // Se vier vazio ou null, preencher com N/A
+        preencherSelectComForca(item, 'N/A');
       }
     });
     
@@ -525,12 +561,17 @@ function preencherUltimoCIF() {
     // 32 itens CIF
     for (let i = 1; i <= 32; i++) {
       const itemId = `cif-item-${i}`;
-      const itemEl = id(itemId);
       const valor = dados[`item_${i}`];
       
-      // ✅ CORRIGIDO: Agora preenche SIM, NÃO e N/A
-      if (itemEl && valor != null) {
-        itemEl.value = valor;
+      // ✅ CORRIGIDO: Usa função com força para garantir preenchimento de N/A
+      if (valor != null && valor !== '') {
+        const preencheu = preencherSelectComForca(itemId, valor);
+        if (!preencheu) {
+          debugLog(`Falha ao preencher ${itemId} com ${valor}`);
+        }
+      } else {
+        // Se vier vazio ou null, preencher com N/A
+        preencherSelectComForca(itemId, 'N/A');
       }
     }
     
