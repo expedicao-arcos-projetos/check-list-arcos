@@ -444,6 +444,15 @@ function preencherUltimoCarregamento() {
     // CNH pode vir da última inspeção
     if (id('cnh') && dados.cnh) id('cnh').value = dados.cnh;
     
+    // ✅ Tipo de veículo vem da última inspeção
+    if (dados.tipo_veiculo) {
+      const radioTipo = document.querySelector(`input[name="tipo_veiculo"][value="${dados.tipo_veiculo}"]`);
+      if (radioTipo) {
+        radioTipo.checked = true;
+        atualizarCamposPorTipoVeiculo();
+      }
+    }
+    
     // Itens de Inspeção (conformes, não conformes, N/A)
     const itensInspecao = [
       'sinalizacao', 'pneus', 'carroceria', 'cinto', 'farois', 
@@ -538,6 +547,7 @@ async function gerarJSONeToken() {
   const pedido = id('pedido').value.trim();
   const eixos = id('eixos').value.trim();
   const telefone = id('telefone').value.trim();
+  const tipoVeiculo = document.querySelector('input[name="tipo_veiculo"]:checked')?.value;
  
   if (!nome) return mostrarErroInline('nome', 'Informe nome');
   if (!cnh) return mostrarErroInline('cnh', 'Informe CNH');
@@ -545,6 +555,7 @@ async function gerarJSONeToken() {
   if (!validarPlaca(placa)) return mostrarErroInline('placa', 'Placa inválida');
   if (!validarPedido(pedido)) return mostrarErroInline('pedido', 'Pedido inválido');
   if (!validarEixos(eixos)) return mostrarErroInline('eixos', 'Eixos inválido');
+  if (!tipoVeiculo) return mostrarErroInline('form-inspecao', 'Selecione tipo de veículo');
  
   const itensObrigatorios = ['sinalizacao', 'pneus', 'carroceria', 'cinto', 'farois', 'alarme_re', 'vazamentos', 'calcos', 'epi_capacete', 'epi_colete', 'epi_oculos', 'epi_botina', 'epi_luvas'];
   for (let campo of itensObrigatorios) {
@@ -553,6 +564,7 @@ async function gerarJSONeToken() {
  
   const inspecao = {
     nome, cnh, placa, pedido, eixos, telefone,
+    tipo_veiculo: tipoVeiculo,
     sinalizacao: id('sinalizacao').value,
     pneus: id('pneus').value,
     carroceria: id('carroceria').value,
