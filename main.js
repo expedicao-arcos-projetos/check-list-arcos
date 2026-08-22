@@ -1,9 +1,9 @@
 // ============================================
-// CONFIGURAÇÃO INICIAL E CONSTANTES
+// CONFIGURAÇÃO - DADOS DO CADASTRO
 // ============================================
  
 const WORKER_URL = 'https://sistema-inspecoes.samuelvivi1996.workers.dev';
-const DEBUG = false; // Mude para true apenas em desenvolvimento local
+const DEBUG = false;
  
 const GABARITO = {
   q1: 'Borracha',
@@ -12,13 +12,20 @@ const GABARITO = {
   q4: 'Bloqueada pelo responsável CSN CIMENTOS.'
 };
  
-// ✅ Removido: let cpfAtual = ''; // GLOBAL REMOVIDO - Usar apenas localmente
 let dadosMotoristaAtual = {};
 let ultimaInspecaoAtual = null;
 let ehPrimeiraVez = false;
 let tipoCarregamentoSelecionado = '';
  
-// ✅ Armazenar CPF apenas quando necessário (em sessionStorage, não localStorage)
+// ✅ DADOS DO CADASTRO (para preencher em FOB e CIF)
+let dadosCadastroMotorista = {
+  nome: '',
+  placa: '',
+  telefone: '',
+  rg: '',
+  eixos: ''
+};
+ 
 function obterCPFTemporario() {
   return sessionStorage.getItem('cpf_temp') || '';
 }
@@ -35,7 +42,6 @@ function id(el) {
   return document.getElementById(el);
 }
  
-// ✅ Debug seguro
 function debugLog(mensagem, dados = null) {
   if (!DEBUG) return;
   console.log(`[DEBUG] ${mensagem}`, dados || '');
@@ -51,7 +57,6 @@ function mostrarErroInline(elementId, mensagem) {
  
   const feedback = document.createElement('div');
   feedback.className = 'form-feedback error';
-  // ✅ Usar textContent ao invés de innerHTML (previne XSS)
   feedback.textContent = `✕ ${mensagem}`;
   container.appendChild(feedback);
  
@@ -106,7 +111,7 @@ document.addEventListener('change', (e) => { if (e.target.id) removerErroInline(
 function validarCPF(cpf) {
   const limpo = cpf.replace(/[^\d]/g, '');
   if (limpo.length !== 11) return false;
-  if (/^(\d)\1+$/.test(limpo)) return false; // Todos os dígitos iguais
+  if (/^(\d)\1+$/.test(limpo)) return false;
   return true;
 }
  
@@ -145,7 +150,6 @@ async function verificarAcesso() {
     return;
   }
  
-  // ✅ Armazenar apenas em sessionStorage
   armazenarCPFTemporario(cpf);
  
   try {
@@ -162,25 +166,34 @@ async function verificarAcesso() {
     
     const resultado = await response.json();
     
-    // ✅ NÃO logar dados sensíveis
     debugLog('✓ Acesso verificado');
  
     if (resultado.existe) {
       ehPrimeiraVez = false;
       dadosMotoristaAtual = resultado.dados || {};
       ultimaInspecaoAtual = resultado.ultima_inspecao || null;
+      
+      // ✅ ARMAZENAR DADOS DO CADASTRO DO MOTORISTA
+      dadosCadastroMotorista = {
+        nome: dadosMotoristaAtual.nome || '',
+        placa: dadosMotoristaAtual.placa || '',
+        telefone: dadosMotoristaAtual.telefone || '',
+        rg: '',
+        eixos: ''
+      };
+      
       irParaSelecaoCarregamento();
     } else {
       ehPrimeiraVez = true;
       dadosMotoristaAtual = {};
       ultimaInspecaoAtual = null;
+      dadosCadastroMotorista = { nome: '', placa: '', telefone: '', rg: '', eixos: '' };
       irParaIntegracao();
     }
   } catch (erro) {
     debugLog('Erro de conexão');
     mostrarErroInline('input-cpf', 'Erro ao conectar. Verifique internet.');
   } finally {
-    // ✅ Limpar campo de entrada
     inputCPF.value = '';
   }
 }
@@ -230,7 +243,6 @@ async function confirmarTipoCarregamento() {
  
   tipoCarregamentoSelecionado = opcao;
  
-  // Busca a última inspeção do tipo escolhido
   try {
     const cpf = obterCPFTemporario();
     const response = await fetch(`${WORKER_URL}/api/ultima-inspecao-por-tipo`, {
@@ -327,6 +339,14 @@ async function concluirIntegracao() {
     const cpf = obterCPFTemporario();
     const sucesso = await salvarMotoristaComProva(cpf, nome, rg, telefone, placa, respostas);
     if (sucesso) {
+      // ✅ ARMAZENAR DADOS DO CADASTRO APÓS INTEGRAÇÃO
+      dadosCadastroMotorista = {
+        nome: nome,
+        placa: placa,
+        telefone: telefone,
+        rg: rg,
+        eixos: ''
+      };
       irParaSelecaoCarregamento();
     }
   } else {
@@ -334,7 +354,6 @@ async function concluirIntegracao() {
   }
 }
  
-// ✅ CORRIGIDO: Agora valida resposta e retorna booleano
 async function salvarMotoristaComProva(cpf, nome, rg, telefone, placa, respostas) {
   try {
     const response = await fetch(`${WORKER_URL}/api/salvar-motorista`, {
@@ -410,17 +429,20 @@ document.addEventListener('change', function(e) {
 // ============================================
  
 function preencherUltimoCarregamento() {
+  // ✅ PRIORIDADE 1: Preencher com dados do cadastro
+  if (id('nome')) id('nome').value = dadosCadastroMotorista.nome || '';
+  if (id('placa')) id('placa').value = dadosCadastroMotorista.placa || '';
+  if (id('telefone')) id('telefone').value = dadosCadastroMotorista.telefone || '';
+  if (id('eixos')) id('eixos').value = dadosCadastroMotorista.eixos || '';
+ 
+  // ✅ PRIORIDADE 2: Se tiver última inspeção, sobrescreve apenas os campos de inspeção
   if (ultimaInspecaoAtual) {
     const dados = ultimaInspecaoAtual;
     
-    // Dados básicos
-    if (id('nome')) id('nome').value = dados.nome || '';
-    if (id('cnh')) id('cnh').value = dados.cnh || '';
-    if (id('placa')) id('placa').value = dados.placa || '';
-    if (id('telefone')) id('telefone').value = dados.telefone || '';
-    if (id('eixos')) id('eixos').value = dados.eixos || '';
+    // CNH pode vir da última inspeção
+    if (id('cnh') && dados.cnh) id('cnh').value = dados.cnh;
     
-    // Itens de Inspeção
+    // Itens de Inspeção (conformes, não conformes, N/A)
     const itensInspecao = [
       'sinalizacao', 'pneus', 'carroceria', 'cinto', 'farois', 
       'alarme_re', 'vazamentos', 'calcos', 'tampa_silo',
@@ -447,19 +469,21 @@ function preencherUltimoCarregamento() {
   }
 }
  
-// ✅ REMOVIDO: console.logs de debug
 function preencherUltimoCIF() {
   debugLog('Preenchendo último CIF');
   
+  // ✅ PRIORIDADE 1: Preencher com dados do cadastro
+  if (id('cif-nome')) id('cif-nome').value = dadosCadastroMotorista.nome || '';
+  if (id('cif-placa')) id('cif-placa').value = dadosCadastroMotorista.placa || '';
+  if (id('cif-telefone')) id('cif-telefone').value = dadosCadastroMotorista.telefone || '';
+  if (id('cif-eixos')) id('cif-eixos').value = dadosCadastroMotorista.eixos || '';
+ 
+  // ✅ PRIORIDADE 2: Se tiver última inspeção, sobrescreve apenas os campos de inspeção
   if (ultimaInspecaoAtual) {
     const dados = ultimaInspecaoAtual;
     
-    // Dados básicos
-    if (id('cif-nome')) id('cif-nome').value = dados.nome || '';
-    if (id('cif-cnh')) id('cif-cnh').value = dados.cnh || '';
-    if (id('cif-telefone')) id('cif-telefone').value = dados.telefone || '';
-    if (id('cif-placa')) id('cif-placa').value = dados.placa || '';
-    if (id('cif-eixos')) id('cif-eixos').value = dados.eixos || '';
+    // CNH pode vir da última inspeção
+    if (id('cif-cnh') && dados.cnh) id('cif-cnh').value = dados.cnh;
     
     // Preenche campos específicos CIF
     if (id('cif-tipo-checklist')) id('cif-tipo-checklist').value = dados.tipo_checklist || '';
@@ -611,12 +635,12 @@ function alternarQtdPaletesCIF(mostrar) {
 async function salvarInspecaoCIF() {
   limparTodosErros();
  
-  const nome = id('cif-nome')?.value.trim() || (ultimaInspecaoAtual?.nome || '');
+  const nome = id('cif-nome')?.value.trim() || dadosCadastroMotorista.nome || '';
   const cnh = id('cif-cnh')?.value.trim() || (ultimaInspecaoAtual?.cnh || '');
-  const telefone = id('cif-telefone')?.value.trim() || (ultimaInspecaoAtual?.telefone || '');
-  let placa = (id('cif-placa')?.value.trim() || (ultimaInspecaoAtual?.placa || '')).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const telefone = id('cif-telefone')?.value.trim() || dadosCadastroMotorista.telefone || '';
+  let placa = (id('cif-placa')?.value.trim() || dadosCadastroMotorista.placa || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   const pedido = id('cif-pedido')?.value.trim();
-  const eixos = id('cif-eixos')?.value.trim() || (ultimaInspecaoAtual?.eixos || '');
+  const eixos = id('cif-eixos')?.value.trim() || dadosCadastroMotorista.eixos || '';
   const tipoChecklist = id('cif-tipo-checklist')?.value;
   const segmento = id('cif-segmento')?.value;
   const transportadora = segmento === 'Transportador' ? id('cif-transportadora')?.value : 'N/A';
@@ -735,6 +759,7 @@ function irParaCPF() {
   dadosMotoristaAtual = {};
   ultimaInspecaoAtual = null;
   ehPrimeiraVez = false;
+  dadosCadastroMotorista = { nome: '', placa: '', telefone: '', rg: '', eixos: '' };
   limparCPFTemporario();
  
   id('step-cpf').classList.remove('hidden');
