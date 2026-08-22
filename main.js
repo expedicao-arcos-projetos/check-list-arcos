@@ -104,6 +104,7 @@ function validarEixos(eixos) {
 // ============================================
 
 async function verificarAcesso() {
+  console.log('>>> Função verificarAcesso INICIADA');
   limparTodosErros();
   const inputCPF = id('input-cpf');
   const cpf = inputCPF.value.trim().replace(/[^\d]/g, '');
