@@ -461,7 +461,8 @@ function preencherUltimoCarregamento() {
     ];
     
     itensInspecao.forEach(item => {
-      if (dados[item] && id(item)) {
+      // ✅ CORRIGIDO: Agora preenche SIM, NÃO e N/A
+      if (id(item) && dados[item] != null) {
         id(item).value = dados[item];
       }
     });
@@ -527,7 +528,8 @@ function preencherUltimoCIF() {
       const itemEl = id(itemId);
       const valor = dados[`item_${i}`];
       
-      if (itemEl && valor) {
+      // ✅ CORRIGIDO: Agora preenche SIM, NÃO e N/A
+      if (itemEl && valor != null) {
         itemEl.value = valor;
       }
     }
@@ -631,9 +633,11 @@ function atualizarCamposCIF() {
  
   if (!secaoPaletes) return;
  
+  // ✅ CORRIGIDO: Apenas "Trouxe palete" some quando CARRETA_SILO
   if (tipoVeiculo === 'CARGA_SECA') {
     secaoPaletes.style.display = 'block';
-  } else {
+  } else if (tipoVeiculo === 'CARRETA_SILO') {
+    // Esconder paletes e marcar como N/A automaticamente
     secaoPaletes.style.display = 'none';
     document.querySelectorAll('input[name="cif_paletes_opcao"]').forEach(radio => radio.checked = false);
     alternarQtdPaletesCIF(false);
