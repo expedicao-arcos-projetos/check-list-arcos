@@ -184,7 +184,7 @@ function alternarCamposPedido() {
   }
 }
 
-function confirmarTipoCarregamento() {
+async function confirmarTipoCarregamento() {
   limparTodosErros();
   const opcao = document.querySelector('input[name="modelo_carregamento"]:checked')?.value;
 
@@ -194,6 +194,22 @@ function confirmarTipoCarregamento() {
   }
 
   tipoCarregamentoSelecionado = opcao;
+
+  // Busca a última inspeção do tipo escolhido
+  try {
+    const response = await fetch(`${WORKER_URL}/api/ultima-inspecao-por-tipo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cpf: cpfAtual, tipo: opcao })
+    });
+
+    const resultado = await response.json();
+    ultimaInspecaoAtual = resultado.ultima_inspecao || null;
+    
+    console.log('Última inspeção do tipo ' + opcao + ':', ultimaInspecaoAtual);
+  } catch (erro) {
+    console.error('Erro ao buscar inspeção:', erro);
+  }
 
   if (opcao === 'FOB') {
     const pedidoFob = id('pedido-fob-input')?.value.trim();
