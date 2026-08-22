@@ -125,6 +125,12 @@ async function verificarAcesso() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     
     const resultado = await response.json();
+    
+    console.log('=== RESULTADO DO CPF ===');
+    console.log('Existe:', resultado.existe);
+    console.log('Motorista:', resultado.dados);
+    console.log('Última Inspeção:', resultado.ultima_inspecao);
+    console.log('========================');
 
     if (resultado.existe) {
       ehPrimeiraVez = false;
