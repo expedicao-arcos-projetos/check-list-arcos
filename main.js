@@ -78,10 +78,7 @@ function resetarCamposReadOnly() {
 document.addEventListener('input', (e) => { if (e.target.id) removerErroInline(e.target.id); });
 document.addEventListener('change', (e) => { if (e.target.id) removerErroInline(e.target.id); });
 
-// ============================================
 // VALIDAÇÕES
-// ============================================
-
 function validarPlaca(placa) {
   const regexPlaca = /^[A-Z]{3}[0-9]{1}[A-Z0-9]{1}[0-9]{2}$/;
   return regexPlaca.test(placa);
@@ -166,16 +163,17 @@ function alternarCamposPedido() {
   const opcao = document.querySelector('input[name="modelo_carregamento"]:checked')?.value;
 
   if (opcao === 'FOB') {
-    id('container-pedido-fob').style.display = 'block';
-    id('container-pedido-cif').style.display = 'none';
+    const fobContainer = id('container-pedido-fob');
+    const cifContainer = id('container-pedido-cif');
+    if (fobContainer) fobContainer.style.display = 'block';
+    if (cifContainer) cifContainer.style.display = 'none';
     if (id('pedido-cif-input')) id('pedido-cif-input').value = '';
   } else if (opcao === 'CIF') {
-    id('container-cif').style.display = 'block';
-    id('container-pedido-fob').style.display = 'none';
+    const fobContainer = id('container-pedido-fob');
+    const cifContainer = id('container-pedido-cif');
+    if (cifContainer) cifContainer.style.display = 'block';
+    if (fobContainer) fobContainer.style.display = 'none';
     if (id('pedido-fob-input')) id('pedido-fob-input').value = '';
-  } else {
-    id('container-pedido-fob').style.display = 'none';
-    id('container-pedido-cif').style.display = 'none';
   }
 }
 
@@ -215,13 +213,15 @@ function alternarBloqueioProva() {
   const aceiteVideo = id('aceite-video')?.checked;
   const secaoProva = id('secao-prova');
 
-  if (aceiteVideo) {
-    secaoProva.style.opacity = '1';
-    secaoProva.style.pointerEvents = 'auto';
-  } else {
-    secaoProva.style.opacity = '0.5';
-    secaoProva.style.pointerEvents = 'none';
-    secaoProva.querySelectorAll('input[type="radio"]').forEach(radio => radio.checked = false);
+  if (secaoProva) {
+    if (aceiteVideo) {
+      secaoProva.style.opacity = '1';
+      secaoProva.style.pointerEvents = 'auto';
+    } else {
+      secaoProva.style.opacity = '0.5';
+      secaoProva.style.pointerEvents = 'none';
+      secaoProva.querySelectorAll('input[type="radio"]').forEach(radio => radio.checked = false);
+    }
   }
 }
 
@@ -290,12 +290,15 @@ async function salvarMotoristaComProva(nome, rg, telefone, placa, respostas) {
 // ============================================
 
 function mostrarQuantidadePaletes() {
-  if (id('quantidade-paletes-container')) id('quantidade-paletes-container').style.display = 'block';
+  const container = id('quantidade-paletes-container');
+  if (container) container.style.display = 'block';
 }
 
 function ocultarQuantidadePaletes() {
-  if (id('quantidade-paletes-container')) id('quantidade-paletes-container').style.display = 'none';
-  if (id('quantidade-paletes')) id('quantidade-paletes').value = '';
+  const container = id('quantidade-paletes-container');
+  const input = id('quantidade-paletes');
+  if (container) container.style.display = 'none';
+  if (input) input.value = '';
 }
 
 function atualizarCamposPorTipoVeiculo() {
@@ -333,12 +336,6 @@ function preencherUltimoCarregamento() {
     if (id('placa')) id('placa').value = dados.placa || '';
     if (id('telefone')) id('telefone').value = dados.telefone || '';
     if (id('eixos')) id('eixos').value = dados.eixos || '';
-
-    if (dados.tipo_veiculo) {
-      const radioTipo = document.querySelector(`input[name="tipo_veiculo"][value="${dados.tipo_veiculo}"]`);
-      if (radioTipo) radioTipo.checked = true;
-      atualizarCamposPorTipoVeiculo();
-    }
   }
 }
 
@@ -351,7 +348,6 @@ async function gerarJSONeToken() {
   const pedido = id('pedido').value.trim();
   const eixos = id('eixos').value.trim();
   const telefone = id('telefone').value.trim();
-  const tipoVeiculo = document.querySelector('input[name="tipo_veiculo"]:checked')?.value;
 
   if (!nome) return mostrarErroInline('nome', 'Informe nome');
   if (!cnh) return mostrarErroInline('cnh', 'Informe CNH');
@@ -359,7 +355,6 @@ async function gerarJSONeToken() {
   if (!validarPlaca(placa)) return mostrarErroInline('placa', 'Placa inválida');
   if (!validarPedido(pedido)) return mostrarErroInline('pedido', 'Pedido inválido');
   if (!validarEixos(eixos)) return mostrarErroInline('eixos', 'Eixos inválido');
-  if (!tipoVeiculo) return mostrarErroInline('step-inspecao', 'Selecione tipo veículo');
 
   const itensObrigatorios = ['sinalizacao', 'pneus', 'carroceria', 'cinto', 'farois', 'alarme_re', 'vazamentos', 'calcos', 'epi_capacete', 'epi_colete', 'epi_oculos', 'epi_botina', 'epi_luvas'];
   for (let campo of itensObrigatorios) {
@@ -367,7 +362,7 @@ async function gerarJSONeToken() {
   }
 
   const inspecao = {
-    nome, cnh, placa, pedido, eixos, telefone, tipo_veiculo: tipoVeiculo,
+    nome, cnh, placa, pedido, eixos, telefone,
     sinalizacao: id('sinalizacao').value,
     pneus: id('pneus').value,
     carroceria: id('carroceria').value,
@@ -417,13 +412,13 @@ function alternarCampoTransportadora() {
   const segmento = id('cif-segmento')?.value;
   const containerTransp = id('container-cif-transportadora');
 
+  if (!containerTransp) return;
+
   if (segmento === 'Transportador') {
-    if (containerTransp) containerTransp.style.display = 'block';
+    containerTransp.style.display = 'block';
   } else {
-    if (containerTransp) {
-      containerTransp.style.display = 'none';
-      id('cif-transportadora').value = '';
-    }
+    containerTransp.style.display = 'none';
+    if (id('cif-transportadora')) id('cif-transportadora').value = '';
   }
 }
 
@@ -431,10 +426,12 @@ function atualizarCamposCIF() {
   const tipoVeiculo = document.querySelector('input[name="cif_tipo_veiculo"]:checked')?.value;
   const secaoPaletes = id('secao-paletes-cif');
 
+  if (!secaoPaletes) return;
+
   if (tipoVeiculo === 'CARGA_SECA') {
-    if (secaoPaletes) secaoPaletes.style.display = 'block';
+    secaoPaletes.style.display = 'block';
   } else {
-    if (secaoPaletes) secaoPaletes.style.display = 'none';
+    secaoPaletes.style.display = 'none';
     document.querySelectorAll('input[name="cif_paletes_opcao"]').forEach(radio => radio.checked = false);
     alternarQtdPaletesCIF(false);
   }
@@ -451,13 +448,12 @@ function alternarQtdPaletesCIF(mostrar) {
 async function salvarInspecaoCIF() {
   limparTodosErros();
 
-  const nome = id('cif-nome').value.trim() || (ultimaInspecaoAtual?.nome || '');
-  const cnh = id('cif-cnh').value.trim() || (ultimaInspecaoAtual?.cnh || '');
-  const telefone = id('cif-telefone').value.trim() || (ultimaInspecaoAtual?.telefone || '');
-  let placa = (id('cif-placa').value.trim() || (ultimaInspecaoAtual?.placa || '')).toUpperCase().replace(/[^A-Z0-9]/g, '');
-  const pedido = id('cif-pedido').value.trim();
-  const eixos = id('cif-eixos').value.trim() || (ultimaInspecaoAtual?.eixos || '');
-  const tipoVeiculo = document.querySelector('input[name="cif_tipo_veiculo"]:checked')?.value;
+  const nome = id('cif-nome')?.value.trim() || (ultimaInspecaoAtual?.nome || '');
+  const cnh = id('cif-cnh')?.value.trim() || (ultimaInspecaoAtual?.cnh || '');
+  const telefone = id('cif-telefone')?.value.trim() || (ultimaInspecaoAtual?.telefone || '');
+  let placa = (id('cif-placa')?.value.trim() || (ultimaInspecaoAtual?.placa || '')).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const pedido = id('cif-pedido')?.value.trim();
+  const eixos = id('cif-eixos')?.value.trim() || (ultimaInspecaoAtual?.eixos || '');
   const tipoChecklist = id('cif-tipo-checklist')?.value;
   const segmento = id('cif-segmento')?.value;
   const transportadora = segmento === 'Transportador' ? id('cif-transportadora')?.value : 'N/A';
@@ -468,27 +464,29 @@ async function salvarInspecaoCIF() {
   if (!validarPlaca(placa)) return mostrarErroInline('cif-placa', 'Placa inválida');
   if (!validarPedido(pedido)) return mostrarErroInline('cif-pedido', 'Pedido inválido');
   if (!validarEixos(eixos)) return mostrarErroInline('cif-eixos', 'Eixos inválido');
-  if (!tipoVeiculo) return mostrarErroInline('step-inspecao-cif', 'Selecione tipo veículo');
   if (!tipoChecklist) return mostrarErroInline('cif-tipo-checklist', 'Selecione checklist');
   if (!segmento) return mostrarErroInline('cif-segmento', 'Selecione segmento');
   if (segmento === 'Transportador' && !transportadora) return mostrarErroInline('cif-transportadora', 'Selecione transportadora');
 
   let paletesOpcao = 'N/A';
   let paletesQtd = 'N/A';
+  const tipoVeiculo = document.querySelector('input[name="cif_tipo_veiculo"]:checked')?.value;
+
+  if (!tipoVeiculo) return mostrarErroInline('step-inspecao-cif', 'Selecione tipo veículo');
 
   if (tipoVeiculo === 'CARGA_SECA') {
     paletesOpcao = document.querySelector('input[name="cif_paletes_opcao"]:checked')?.value;
     if (!paletesOpcao) return mostrarErroInline('secao-paletes-cif', 'Selecione paletes');
     if (paletesOpcao === 'SIM') {
-      paletesQtd = id('cif-qtd-paletes').value.trim();
+      paletesQtd = id('cif-qtd-paletes')?.value.trim();
       if (!paletesQtd) return mostrarErroInline('cif-qtd-paletes', 'Informe quantidade');
     }
   }
 
   const inspecaoDados = {
-    nome, cnh, placa, pedido, eixos, telefone, tipo_veiculo: tipoVeiculo,
-    paletes_opcao: paletesOpcao, paletes_quantidade: paletesQtd,
-    tipo_checklist: tipoChecklist, segmento, transportadora
+    nome, cnh, placa, pedido, eixos, telefone,
+    tipo_checklist: tipoChecklist, segmento, transportadora,
+    paletes_opcao: paletesOpcao, paletes_quantidade: paletesQtd
   };
 
   for (let i = 1; i <= 32; i++) {
@@ -601,10 +599,13 @@ function irParaInspecaoCIF(numeroPedido) {
     id('cif-pedido').readOnly = true;
   }
 
-  alternarCampoTransportadora();
-  atualizarCamposCIF();
-
   id('step-inspecao-cif').classList.remove('hidden');
+
+  // Depois de mostrar, atualiza os campos
+  setTimeout(() => {
+    alternarCampoTransportadora();
+    atualizarCamposCIF();
+  }, 100);
 }
 
 function irParaSucesso() {
