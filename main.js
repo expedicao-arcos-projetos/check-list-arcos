@@ -1140,6 +1140,34 @@ function ocultarTodas() {
 document.addEventListener('DOMContentLoaded', () => {
   utils.debug('Aplicação iniciada');
  
+  // ✅ Handler global para evitar erro de listener não respondido
+  // Isso previne o erro "message channel closed before response" de extensões/service workers
+  window.addEventListener('message', (event) => {
+    // Ignorar mensagens de origens não confiáveis
+    if (event.origin !== window.location.origin) return;
+    
+    // Se houver message ports, responder para evitar timeout
+    if (event.ports && event.ports.length > 0) {
+      try {
+        event.ports[0].postMessage({ received: true });
+        event.ports[0].close();
+      } catch (e) {
+        // Ignorar se falhar
+      }
+    }
+  });
+ 
+  // ✅ Handler para unhandled promise rejections
+  window.addEventListener('unhandledrejection', (event) => {
+    // Suprimir aviso de messaging que não afeta a funcionalidade
+    if (event.reason && typeof event.reason === 'object') {
+      const msg = event.reason.message || '';
+      if (msg.includes('listener') || msg.includes('channel') || msg.includes('closed')) {
+        event.preventDefault();
+      }
+    }
+  });
+ 
   // Event listeners
   document.addEventListener('change', (e) => {
     if (e.target.name === 'tipo_veiculo') atualizarCamposPorTipoVeiculo();
