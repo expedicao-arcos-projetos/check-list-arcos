@@ -637,23 +637,30 @@
  
         <div class="input-group">
           <label for="cif-segmento">Segmento:</label>
-          <select id="cif-segmento" onchange="alternarCampoTransportadora()" required>
+          <select id="cif-segmento" required>
             <option value="">-- Selecione --</option>
             <option value="Transportador">Transportador</option>
             <option value="Autonomo">Autônomo</option>
           </select>
         </div>
  
-        <!-- SELEÇÃO DA TRANSPORTADORA (Exibido se Segmento = Transportador) -->
-        <div class="input-group" id="container-cif-transportadora" style="display: none;">
-          <label for="cif-transportadora">Selecione a Transportadora:</label>
-          <select id="cif-transportadora">
-            <option value="">-- Selecione --</option>
+        <!-- SELEÇÃO DA TRANSPORTADORA (SEMPRE VISÍVEL) -->
+        <div class="input-group">
+          <label for="cif-transportadora">🚚 Transportadora:</label>
+          <select id="cif-transportadora" onchange="alternarCampoTransportadoraCustomizada()" required>
+            <option value="">-- Selecione uma Transportadora --</option>
             <option value="TORA">TORA</option>
             <option value="TRANSAGIL">TRANSAGIL</option>
             <option value="TARGET">TARGET</option>
             <option value="FROTA CSN">FROTA CSN</option>
+            <option value="OUTRA">❕ Outra (Digite Abaixo)</option>
           </select>
+        </div>
+ 
+        <!-- INPUT CUSTOMIZADO PARA TRANSPORTADORA -->
+        <div class="input-group" id="container-transportadora-customizada" style="display: none;">
+          <label for="cif-transportadora-customizada">Nome da Transportadora (Customize):</label>
+          <input type="text" id="cif-transportadora-customizada" placeholder="Digite o nome da transportadora" maxlength="100" required>
         </div>
  
         <h3>🔍 Check List de Verificação (32 Itens)</h3>
