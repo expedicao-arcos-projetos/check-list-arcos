@@ -648,6 +648,18 @@ async function gerarJSONeToken() {
   loading.show();
   const cpf = sessao.obterCPF();
  
+  // Atualizar dados do motorista (se já existe cadastro)
+  if (estadoGlobal.motorista.cpf) {
+    await api.chamar('/api/atualizar-dados-motorista', 'POST', {
+      cpf,
+      nome: inspecao.nome,
+      telefone: inspecao.telefone,
+      placa: inspecao.placa,
+      rg: estadoGlobal.dadosCadastro.rg || '',
+      eixos: inspecao.eixos
+    });
+  }
+ 
   const resultado = await api.chamar('/api/salvar-inspecao', 'POST', {
     cpf,
     inspecao_dados: inspecao
@@ -853,6 +865,18 @@ async function salvarInspecaoCIF() {
  
   loading.show();
   const cpf = sessao.obterCPF();
+ 
+  // Atualizar dados do motorista (se já existe cadastro)
+  if (estadoGlobal.motorista.cpf) {
+    await api.chamar('/api/atualizar-dados-motorista', 'POST', {
+      cpf,
+      nome: inspecaoDados.nome,
+      telefone: inspecaoDados.telefone,
+      placa: inspecaoDados.placa,
+      rg: estadoGlobal.dadosCadastro.rg || '',
+      eixos: inspecaoDados.eixos
+    });
+  }
  
   const resultado = await api.chamar('/api/salvar-inspecao-cif', 'POST', {
     cpf,
