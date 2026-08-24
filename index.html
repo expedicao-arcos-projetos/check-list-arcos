@@ -286,8 +286,20 @@
         </label>
         
         <div id="container-pedido-fob" class="input-group" style="display: none; margin-top: 5px; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #cbd5e1;">
-          <label for="pedido-fob-input" style="margin-top: 0;">Digite o número do pedido FOB:</label>
-          <input type="text" id="pedido-fob-input" placeholder="Exemplo de pedido: 9999999" maxlength="8" inputmode="numeric">
+          <label for="pedido-fob-input" style="margin-top: 0;">Digite o número do pedido FOB (7-8 dígitos):</label>
+          <input type="text" id="pedido-fob-input" placeholder="Exemplo: 1234567" maxlength="8" inputmode="numeric">
+          
+          <!-- Checkbox para múltiplos pedidos FOB -->
+          <label style="display: block; margin-top: 12px;">
+            <input type="checkbox" id="multiplos-pedidos-fob-check" onchange="alternarMultiplosPedidosSeleção('fob')">
+            <span>☑️ Tenho mais de um pedido</span>
+          </label>
+          
+          <!-- Textarea para outros pedidos FOB -->
+          <div id="container-outros-pedidos-fob" style="display: none; margin-top: 12px;">
+            <label for="outros-pedidos-fob" style="display: block; margin-bottom: 8px;">Outros Pedidos (um por linha, 7-8 dígitos cada):</label>
+            <textarea id="outros-pedidos-fob" placeholder="Digite os outros pedidos&#10;Exemplo:&#10;2345678&#10;3456789" rows="3" style="font-family: monospace; width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc;"></textarea>
+          </div>
         </div>
     
         <label class="card-carregamento">
@@ -299,8 +311,20 @@
         </label>
     
         <div id="container-pedido-cif" class="input-group" style="display: none; margin-top: 5px; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #cbd5e1;">
-          <label for="pedido-cif-input" style="margin-top: 0;">Digite o número do pedido CIF/Transferência:</label>
-          <input type="text" id="pedido-cif-input" placeholder="Exemplo de pedido: 104000000" maxlength="9" inputmode="numeric">
+          <label for="pedido-cif-input" style="margin-top: 0;">Digite o número do pedido CIF/Transferência (7-8 dígitos):</label>
+          <input type="text" id="pedido-cif-input" placeholder="Exemplo: 1234567" maxlength="8" inputmode="numeric">
+          
+          <!-- Checkbox para múltiplos pedidos CIF -->
+          <label style="display: block; margin-top: 12px;">
+            <input type="checkbox" id="multiplos-pedidos-cif-check" onchange="alternarMultiplosPedidosSeleção('cif')">
+            <span>☑️ Tenho mais de um pedido</span>
+          </label>
+          
+          <!-- Textarea para outros pedidos CIF -->
+          <div id="container-outros-pedidos-cif" style="display: none; margin-top: 12px;">
+            <label for="outros-pedidos-cif" style="display: block; margin-bottom: 8px;">Outros Pedidos (um por linha, 7-8 dígitos cada):</label>
+            <textarea id="outros-pedidos-cif" placeholder="Digite os outros pedidos&#10;Exemplo:&#10;2345678&#10;3456789" rows="3" style="font-family: monospace; width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc;"></textarea>
+          </div>
         </div>
       </div>
     
@@ -341,23 +365,8 @@
         </div>
  
         <div class="input-group">
-          <label for="pedido">Nº do Pedido (Principal - 7-8 dígitos):</label>
+          <label for="pedido">Nº do Pedido:</label>
           <input type="text" id="pedido" placeholder="EX: 1234567" maxlength="8" inputmode="numeric" required>                
-        </div>
- 
-        <!-- MÚLTIPLOS PEDIDOS -->
-        <div class="input-group">
-          <label>
-            <input type="checkbox" id="multiplos-pedidos-check" onchange="alternarMultiplosPedidos()">
-            <span>☑️ Tenho outros pedidos também?</span>
-          </label>
-        </div>
- 
-        <!-- CAMPO PARA OUTROS PEDIDOS (Escondido por padrão) -->
-        <div class="input-group" id="container-outros-pedidos" style="display: none;">
-          <label for="outros-pedidos">Outros Pedidos (um por linha, 7-8 dígitos cada):</label>
-          <textarea id="outros-pedidos" placeholder="Digite os outros pedidos&#10;Exemplo:&#10;2345678&#10;3456789" rows="4" style="font-family: monospace;"></textarea>
-          <small style="color: #666; display: block; margin-top: 5px;">💡 Dica: Digite um pedido por linha (7-8 dígitos cada)</small>
         </div>
  
         <div class="input-group">
@@ -584,21 +593,6 @@
         <div class="input-group">
           <label for="cif-pedido">Nº do Pedido (Principal - 7-8 dígitos):</label>
           <input type="text" id="cif-pedido" placeholder="EX: 1234567" maxlength="8" inputmode="numeric" required>
-        </div>
- 
-        <!-- MÚLTIPLOS PEDIDOS CIF -->
-        <div class="input-group">
-          <label>
-            <input type="checkbox" id="multiplos-pedidos-cif-check" onchange="alternarMultiplosPedidosCIF()">
-            <span>☑️ Tenho outros pedidos também?</span>
-          </label>
-        </div>
- 
-        <!-- CAMPO PARA OUTROS PEDIDOS CIF (Escondido por padrão) -->
-        <div class="input-group" id="container-outros-pedidos-cif" style="display: none;">
-          <label for="outros-pedidos-cif">Outros Pedidos (um por linha, 7-8 dígitos cada):</label>
-          <textarea id="outros-pedidos-cif" placeholder="Digite os outros pedidos&#10;Exemplo:&#10;2345678&#10;3456789" rows="4" style="font-family: monospace;"></textarea>
-          <small style="color: #666; display: block; margin-top: 5px;">💡 Dica: Digite um pedido por linha (7-8 dígitos cada)</small>
         </div>
  
         <div class="input-group">
