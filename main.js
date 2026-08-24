@@ -692,15 +692,17 @@ function alternarQtdPaletesCIF(mostrar) {
   }
 }
  
-function alternarCampoTransportadora() {
-  const segmento = utils.id('cif-segmento')?.value;
-  const container = utils.id('container-cif-transportadora');
+function alternarCampoTransportadoraCustomizada() {
+  const transportadora = utils.id('cif-transportadora')?.value;
+  const container = utils.id('container-transportadora-customizada');
+  const input = utils.id('cif-transportadora-customizada');
  
-  if (segmento === 'Transportador') {
+  if (transportadora === 'OUTRA') {
     container.style.display = 'block';
+    if (input) input.focus();
   } else {
     container.style.display = 'none';
-    if (utils.id('cif-transportadora')) utils.id('cif-transportadora').value = '';
+    if (input) input.value = '';
   }
 }
  
@@ -724,7 +726,22 @@ function preencherUltimoCIF() {
   // Campos CIF
   if (utils.id('cif-tipo-checklist')) utils.id('cif-tipo-checklist').value = dados.tipo_checklist || '';
   if (utils.id('cif-segmento')) utils.id('cif-segmento').value = dados.segmento || '';
-  if (utils.id('cif-transportadora')) utils.id('cif-transportadora').value = dados.transportadora || '';
+  // Preencher transportadora (se for customizada, marcar como OUTRO)
+  if (utils.id('cif-transportadora')) {
+    const transportadora = dados.transportadora || '';
+    const opcoesPadrao = ['TORA', 'TRANSAGIL', 'TARGET', 'FROTA CSN', 'N/A', ''];
+    
+    if (opcoesPadrao.includes(transportadora)) {
+      utils.id('cif-transportadora').value = transportadora;
+    } else if (transportadora) {
+      // É uma transportadora customizada
+      utils.id('cif-transportadora').value = 'OUTRO';
+      if (utils.id('cif-transportadora-customizada')) {
+        utils.id('cif-transportadora-customizada').value = transportadora;
+        utils.id('container-transportadora-customizada').style.display = 'block';
+      }
+    }
+  }
  
   // Tipo veículo
   if (dados.tipo_veiculo_cif) {
@@ -774,8 +791,14 @@ async function salvarInspecaoCIF() {
   if (!tipoChecklist) return erros.mostrar('cif-tipo-checklist', 'Selecione checklist');
   if (!segmento) return erros.mostrar('cif-segmento', 'Selecione segmento');
   if (!tipoVeiculoCIF) return erros.mostrar('step-inspecao-cif', 'Selecione tipo veículo');
-  if (segmento === 'Transportador' && !utils.id('cif-transportadora')?.value) {
-    return erros.mostrar('cif-transportadora', 'Selecione transportadora');
+  // Validar transportadora se selecionou OUTRO
+  if (utils.id('cif-transportadora')?.value === 'OUTRA') {
+    const transportadoraCustomizada = utils.id('cif-transportadora-customizada')?.value.trim();
+    if (!transportadoraCustomizada) {
+      return erros.mostrar('cif-transportadora-customizada', 'Digite o nome da transportadora');
+    }
+  } else if (!utils.id('cif-transportadora')?.value) {
+    return erros.mostrar('cif-transportadora', 'Selecione uma transportadora');
   }
  
   // Validar paletes para CARGA_SECA
@@ -804,7 +827,13 @@ async function salvarInspecaoCIF() {
     telefone,
     tipo_checklist: tipoChecklist,
     segmento,
-    transportadora: segmento === 'Transportador' ? utils.id('cif-transportadora').value : 'N/A',
+    transportadora: (function() {
+      const transportadoraSelecionada = utils.id('cif-transportadora')?.value;
+      if (transportadoraSelecionada === 'OUTRA') {
+        return utils.id('cif-transportadora-customizada')?.value || 'N/A';
+      }
+      return transportadoraSelecionada || 'N/A';
+    })(),
     tipo_veiculo_cif: tipoVeiculoCIF,
     trouxe_palete: trouxePalete,
     quantidade_palete: qtdPalete
@@ -989,7 +1018,6 @@ function irParaInspecaoCIF(numeroPedido) {
  
   setTimeout(() => {
     preencherUltimoCIF();
-    alternarCampoTransportadora();
     atualizarCamposCIF();
   }, 100);
 }
