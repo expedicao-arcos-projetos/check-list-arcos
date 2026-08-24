@@ -103,7 +103,7 @@ const validadores = {
  
   pedido: (pedido) => {
     const limpo = pedido.replace(/[^\d]/g, '');
-    return limpo.length >= 6 && limpo.length <= 9;
+    return limpo.length >= 7 && limpo.length <= 8;
   },
  
   eixos: (eixos) => {
@@ -294,7 +294,10 @@ async function verificarAcesso() {
   const { existe, dados, ultima_inspecao } = resultado.dados;
  
   if (existe) {
-    estadoGlobal.motorista = dados || {};
+    estadoGlobal.motorista = {
+      cpf: cpf,  // ✅ Adicionar CPF
+      ...dados
+    };
     estadoGlobal.ultimaInspecao = ultima_inspecao;
     estadoGlobal.primeiraVez = false;
     
@@ -484,7 +487,7 @@ async function confirmarTipoCarregamento() {
  
   if (!validadores.pedido(pedido)) {
     const fieldId = opcao === 'FOB' ? 'pedido-fob-input' : 'pedido-cif-input';
-    erros.mostrar(fieldId, 'Pedido inválido (6-9 dígitos)');
+    erros.mostrar(fieldId, 'Pedido inválido (7-8 dígitos)');
     return;
   }
  
@@ -514,10 +517,98 @@ async function confirmarTipoCarregamento() {
 }
  
 // ============================================
-// FLUXO: INSPEÇÃO FOB
+// GERENCIADOR DE MÚLTIPLOS PEDIDOS
 // ============================================
  
-function atualizarCamposPorTipoVeiculo() {
+function alternarMultiplosPedidos() {
+  const checkbox = utils.id('multiplos-pedidos-check');
+  const container = utils.id('container-outros-pedidos');
+ 
+  if (checkbox.checked) {
+    container.style.display = 'block';
+  } else {
+    container.style.display = 'none';
+    utils.id('outros-pedidos').value = '';
+  }
+}
+ 
+function alternarMultiplosPedidosCIF() {
+  const checkbox = utils.id('multiplos-pedidos-cif-check');
+  const container = utils.id('container-outros-pedidos-cif');
+ 
+  if (checkbox.checked) {
+    container.style.display = 'block';
+  } else {
+    container.style.display = 'none';
+    utils.id('outros-pedidos-cif').value = '';
+  }
+}
+ 
+// Função para capturar todos os pedidos (principal + outros)
+function capturarTodosPedidos(isPrincipal = false) {
+  const pedidoPrincipal = isPrincipal ? 
+    utils.id('pedido')?.value?.trim() : 
+    utils.id('cif-pedido')?.value?.trim();
+ 
+  if (!pedidoPrincipal) {
+    return '';
+  }
+ 
+  // Limpar pedido principal
+  const pedidoPrincipalLimpo = pedidoPrincipal.replace(/[^\d]/g, '');
+  if (pedidoPrincipalLimpo.length < 7 || pedidoPrincipalLimpo.length > 8) {
+    return null; // Erro
+  }
+ 
+  let todosPedidos = [pedidoPrincipalLimpo];
+ 
+  // Capturar outros pedidos
+  const checkboxOtros = isPrincipal ? 
+    utils.id('multiplos-pedidos-check') : 
+    utils.id('multiplos-pedidos-cif-check');
+ 
+  if (checkboxOtros?.checked) {
+    const textareaId = isPrincipal ? 'outros-pedidos' : 'outros-pedidos-cif';
+    const outros = utils.id(textareaId)?.value?.trim();
+ 
+    if (outros) {
+      const pedidosArray = outros.split('\n');
+ 
+      for (let p of pedidosArray) {
+        const p_limpo = p.trim().replace(/[^\d]/g, '');
+        if (p_limpo.length < 7 || p_limpo.length > 8) {
+          return null; // Erro: pedido inválido
+        }
+        todosPedidos.push(p_limpo);
+      }
+    }
+  }
+ 
+  // Retornar todos os pedidos separados por /
+  return todosPedidos.join('/');
+}
+ 
+// ============================================
+// VALIDAR MÚLTIPLOS PEDIDOS
+// ============================================
+ 
+function validarMultiplosPedidos(isPrincipal = false) {
+  const resultado = capturarTodosPedidos(isPrincipal);
+ 
+  if (resultado === null) {
+    const fieldId = isPrincipal ? 'pedido' : 'cif-pedido';
+    erros.mostrar(fieldId, '❌ Um ou mais pedidos inválidos (7-8 dígitos cada)');
+    return false;
+  }
+ 
+  if (resultado === '') {
+    const fieldId = isPrincipal ? 'pedido' : 'cif-pedido';
+    erros.mostrar(fieldId, '❌ Pedido obrigatório');
+    return false;
+  }
+ 
+  return true;
+}
   const tipoVeiculo = document.querySelector('input[name="tipo_veiculo"]:checked')?.value;
   const containerTampaSilo = utils.id('container-tampa-silo');
   const selectTampaSilo = utils.id('tampa_silo');
@@ -591,17 +682,19 @@ async function gerarJSONeToken() {
   const nome = utils.id('nome').value.trim();
   const cnh = utils.id('cnh').value.trim();
   const placa = utils.formatarPlaca(utils.id('placa').value);
-  const pedido = utils.id('pedido').value.trim();
   const eixos = utils.id('eixos').value.trim();
   const telefone = utils.limparTelefone(utils.id('telefone').value);
   const tipoVeiculo = document.querySelector('input[name="tipo_veiculo"]:checked')?.value;
+ 
+  // ✅ Validar múltiplos pedidos
+  if (!validarMultiplosPedidos(true)) return;
+  const todosPedidos = capturarTodosPedidos(true);
  
   // Validações
   if (!nome || nome.length < 3) return erros.mostrar('nome', 'Informe nome completo');
   if (!validadores.cnh(cnh)) return erros.mostrar('cnh', 'CNH inválida (11 dígitos)');
   if (!validadores.telefone(telefone)) return erros.mostrar('telefone', 'Telefone inválido');
   if (!validadores.placa(placa)) return erros.mostrar('placa', 'Placa inválida');
-  if (!validadores.pedido(pedido)) return erros.mostrar('pedido', 'Pedido inválido');
   if (!validadores.eixos(eixos)) return erros.mostrar('eixos', 'Eixos deve ser de 1 a 9');
   if (!tipoVeiculo) return erros.mostrar('form-inspecao', 'Selecione tipo de veículo');
  
@@ -623,7 +716,7 @@ async function gerarJSONeToken() {
     nome,
     cnh,
     placa,
-    pedido,
+    pedido: todosPedidos,  // ✅ Usar múltiplos pedidos
     eixos,
     telefone,
     tipo_veiculo: tipoVeiculo,
@@ -648,16 +741,21 @@ async function gerarJSONeToken() {
   loading.show();
   const cpf = sessao.obterCPF();
  
-  // Atualizar dados do motorista (se já existe cadastro)
-  if (estadoGlobal.motorista.cpf) {
-    await api.chamar('/api/atualizar-dados-motorista', 'POST', {
-      cpf,
-      nome: inspecao.nome,
-      telefone: inspecao.telefone,
-      placa: inspecao.placa,
-      rg: estadoGlobal.dadosCadastro.rg || '',
-      eixos: inspecao.eixos
-    });
+  // ✅ Atualizar dados do motorista (se já existe cadastro)
+  if (estadoGlobal.motorista && estadoGlobal.motorista.cpf) {
+    try {
+      await api.chamar('/api/atualizar-dados-motorista', 'POST', {
+        cpf,
+        nome: inspecao.nome,
+        telefone: inspecao.telefone,
+        placa: inspecao.placa,
+        rg: estadoGlobal.dadosCadastro.rg || '',
+        eixos: inspecao.eixos
+      });
+      utils.debug('✅ Dados do motorista atualizados');
+    } catch (err) {
+      utils.debug('⚠️ Erro ao atualizar dados (continuando):', err);
+    }
   }
  
   const resultado = await api.chamar('/api/salvar-inspecao', 'POST', {
@@ -787,18 +885,20 @@ async function salvarInspecaoCIF() {
   const cnh = utils.id('cif-cnh')?.value.trim() || '';
   const telefone = utils.limparTelefone(utils.id('cif-telefone')?.value || '');
   const placa = utils.formatarPlaca(utils.id('cif-placa')?.value || '');
-  const pedido = utils.id('cif-pedido')?.value.trim() || '';
   const eixos = utils.id('cif-eixos')?.value.trim() || '';
   const tipoChecklist = utils.id('cif-tipo-checklist')?.value || '';
   const segmento = utils.id('cif-segmento')?.value || '';
   const tipoVeiculoCIF = document.querySelector('input[name="cif_tipo_veiculo"]:checked')?.value;
+ 
+  // ✅ Validar múltiplos pedidos CIF
+  if (!validarMultiplosPedidos(false)) return;
+  const todosPedidos = capturarTodosPedidos(false);
  
   // Validações
   if (!nome || nome.length < 3) return erros.mostrar('cif-nome', 'Informe nome completo');
   if (!validadores.cnh(cnh)) return erros.mostrar('cif-cnh', 'CNH inválida');
   if (!validadores.telefone(telefone)) return erros.mostrar('cif-telefone', 'Telefone inválido');
   if (!validadores.placa(placa)) return erros.mostrar('cif-placa', 'Placa inválida');
-  if (!validadores.pedido(pedido)) return erros.mostrar('cif-pedido', 'Pedido inválido');
   if (!validadores.eixos(eixos)) return erros.mostrar('cif-eixos', 'Eixos inválido');
   if (!tipoChecklist) return erros.mostrar('cif-tipo-checklist', 'Selecione checklist');
   if (!segmento) return erros.mostrar('cif-segmento', 'Selecione segmento');
@@ -834,7 +934,7 @@ async function salvarInspecaoCIF() {
     nome,
     cnh,
     placa,
-    pedido,
+    pedido: todosPedidos,  // ✅ Usar múltiplos pedidos
     eixos,
     telefone,
     tipo_checklist: tipoChecklist,
@@ -866,16 +966,21 @@ async function salvarInspecaoCIF() {
   loading.show();
   const cpf = sessao.obterCPF();
  
-  // Atualizar dados do motorista (se já existe cadastro)
-  if (estadoGlobal.motorista.cpf) {
-    await api.chamar('/api/atualizar-dados-motorista', 'POST', {
-      cpf,
-      nome: inspecaoDados.nome,
-      telefone: inspecaoDados.telefone,
-      placa: inspecaoDados.placa,
-      rg: estadoGlobal.dadosCadastro.rg || '',
-      eixos: inspecaoDados.eixos
-    });
+  // ✅ Atualizar dados do motorista (se já existe cadastro)
+  if (estadoGlobal.motorista && estadoGlobal.motorista.cpf) {
+    try {
+      await api.chamar('/api/atualizar-dados-motorista', 'POST', {
+        cpf,
+        nome: inspecaoDados.nome,
+        telefone: inspecaoDados.telefone,
+        placa: inspecaoDados.placa,
+        rg: estadoGlobal.dadosCadastro.rg || '',
+        eixos: inspecaoDados.eixos
+      });
+      utils.debug('✅ Dados do motorista atualizados');
+    } catch (err) {
+      utils.debug('⚠️ Erro ao atualizar dados (continuando):', err);
+    }
   }
  
   const resultado = await api.chamar('/api/salvar-inspecao-cif', 'POST', {
