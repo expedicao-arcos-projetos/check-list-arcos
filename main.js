@@ -609,6 +609,12 @@ function validarMultiplosPedidos(isPrincipal = false) {
  
   return true;
 }
+ 
+// ============================================
+// FLUXO: INSPEÇÃO FOB
+// ============================================
+ 
+function atualizarCamposPorTipoVeiculo() {
   const tipoVeiculo = document.querySelector('input[name="tipo_veiculo"]:checked')?.value;
   const containerTampaSilo = utils.id('container-tampa-silo');
   const selectTampaSilo = utils.id('tampa_silo');
