@@ -454,6 +454,65 @@ async function concluirIntegracao() {
 // FLUXO: SELEÇÃO DE CARREGAMENTO
 // ============================================
  
+// ✅ Alternar visibilidade dos campos de múltiplos pedidos na seleção
+function alternarMultiplosPedidosSeleção(tipo) {
+  const checkboxId = `multiplos-pedidos-${tipo}-check`;
+  const containerId = `container-outros-pedidos-${tipo}`;
+  const checkbox = utils.id(checkboxId);
+  const container = utils.id(containerId);
+ 
+  if (!checkbox || !container) return;
+ 
+  if (checkbox.checked) {
+    container.style.display = 'block';
+  } else {
+    container.style.display = 'none';
+    const textareaId = `outros-pedidos-${tipo}`;
+    const textarea = utils.id(textareaId);
+    if (textarea) textarea.value = '';
+  }
+}
+ 
+// ✅ Capturar todos os pedidos da tela de seleção
+function capturarTodosPedidosSeleção(tipo) {
+  const inputId = tipo === 'fob' ? 'pedido-fob-input' : 'pedido-cif-input';
+  const checkboxId = `multiplos-pedidos-${tipo}-check`;
+  const textareaId = `outros-pedidos-${tipo}`;
+ 
+  const pedidoPrincipal = utils.id(inputId)?.value?.trim();
+  if (!pedidoPrincipal) {
+    return null; // Vazio
+  }
+ 
+  // Validar pedido principal
+  const pedidoPrincipalLimpo = pedidoPrincipal.replace(/[^\d]/g, '');
+  if (pedidoPrincipalLimpo.length < 7 || pedidoPrincipalLimpo.length > 8) {
+    return false; // Erro
+  }
+ 
+  let todosPedidos = [pedidoPrincipalLimpo];
+ 
+  // Capturar outros pedidos se checkbox marcado
+  const checkbox = utils.id(checkboxId);
+  if (checkbox?.checked) {
+    const outros = utils.id(textareaId)?.value?.trim();
+ 
+    if (outros) {
+      const pedidosArray = outros.split('\n');
+ 
+      for (let p of pedidosArray) {
+        const p_limpo = p.trim().replace(/[^\d]/g, '');
+        if (p_limpo.length < 7 || p_limpo.length > 8) {
+          return false; // Erro: pedido inválido
+        }
+        todosPedidos.push(p_limpo);
+      }
+    }
+  }
+ 
+  return todosPedidos.join('/');
+}
+ 
 function alternarCamposPedido() {
   erros.limparTodos();
   const opcao = document.querySelector('input[name="modelo_carregamento"]:checked')?.value;
@@ -478,21 +537,24 @@ async function confirmarTipoCarregamento() {
     return;
   }
  
-  let pedido = '';
-  if (opcao === 'FOB') {
-    pedido = utils.id('pedido-fob-input').value.trim();
-  } else {
-    pedido = utils.id('pedido-cif-input').value.trim();
+  // ✅ Capturar MÚLTIPLOS pedidos
+  const tipo = opcao === 'FOB' ? 'fob' : 'cif';
+  const todosPedidos = capturarTodosPedidosSeleção(tipo);
+ 
+  if (todosPedidos === null) {
+    const fieldId = opcao === 'FOB' ? 'pedido-fob-input' : 'pedido-cif-input';
+    erros.mostrar(fieldId, '❌ Pedido obrigatório');
+    return;
   }
  
-  if (!validadores.pedido(pedido)) {
+  if (todosPedidos === false) {
     const fieldId = opcao === 'FOB' ? 'pedido-fob-input' : 'pedido-cif-input';
-    erros.mostrar(fieldId, 'Pedido inválido (7-8 dígitos)');
+    erros.mostrar(fieldId, '❌ Um ou mais pedidos inválidos (7-8 dígitos cada)');
     return;
   }
  
   estadoGlobal.tipoCarregamento = opcao;
-  estadoGlobal.numeroPedido = pedido;
+  estadoGlobal.numeroPedido = todosPedidos;  // ✅ Múltiplos pedidos
  
   loading.show();
   const cpf = sessao.obterCPF();
@@ -510,104 +572,10 @@ async function confirmarTipoCarregamento() {
   }
  
   if (opcao === 'FOB') {
-    irParaInspecao(pedido);
+    irParaInspecao(todosPedidos);  // ✅ Passar múltiplos pedidos
   } else {
-    irParaInspecaoCIF(pedido);
+    irParaInspecaoCIF(todosPedidos);  // ✅ Passar múltiplos pedidos
   }
-}
- 
-// ============================================
-// GERENCIADOR DE MÚLTIPLOS PEDIDOS
-// ============================================
- 
-function alternarMultiplosPedidos() {
-  const checkbox = utils.id('multiplos-pedidos-check');
-  const container = utils.id('container-outros-pedidos');
- 
-  if (checkbox.checked) {
-    container.style.display = 'block';
-  } else {
-    container.style.display = 'none';
-    utils.id('outros-pedidos').value = '';
-  }
-}
- 
-function alternarMultiplosPedidosCIF() {
-  const checkbox = utils.id('multiplos-pedidos-cif-check');
-  const container = utils.id('container-outros-pedidos-cif');
- 
-  if (checkbox.checked) {
-    container.style.display = 'block';
-  } else {
-    container.style.display = 'none';
-    utils.id('outros-pedidos-cif').value = '';
-  }
-}
- 
-// Função para capturar todos os pedidos (principal + outros)
-function capturarTodosPedidos(isPrincipal = false) {
-  const pedidoPrincipal = isPrincipal ? 
-    utils.id('pedido')?.value?.trim() : 
-    utils.id('cif-pedido')?.value?.trim();
- 
-  if (!pedidoPrincipal) {
-    return '';
-  }
- 
-  // Limpar pedido principal
-  const pedidoPrincipalLimpo = pedidoPrincipal.replace(/[^\d]/g, '');
-  if (pedidoPrincipalLimpo.length < 7 || pedidoPrincipalLimpo.length > 8) {
-    return null; // Erro
-  }
- 
-  let todosPedidos = [pedidoPrincipalLimpo];
- 
-  // Capturar outros pedidos
-  const checkboxOtros = isPrincipal ? 
-    utils.id('multiplos-pedidos-check') : 
-    utils.id('multiplos-pedidos-cif-check');
- 
-  if (checkboxOtros?.checked) {
-    const textareaId = isPrincipal ? 'outros-pedidos' : 'outros-pedidos-cif';
-    const outros = utils.id(textareaId)?.value?.trim();
- 
-    if (outros) {
-      const pedidosArray = outros.split('\n');
- 
-      for (let p of pedidosArray) {
-        const p_limpo = p.trim().replace(/[^\d]/g, '');
-        if (p_limpo.length < 7 || p_limpo.length > 8) {
-          return null; // Erro: pedido inválido
-        }
-        todosPedidos.push(p_limpo);
-      }
-    }
-  }
- 
-  // Retornar todos os pedidos separados por /
-  return todosPedidos.join('/');
-}
- 
-// ============================================
-// VALIDAR MÚLTIPLOS PEDIDOS
-// ============================================
- 
-function validarMultiplosPedidos(isPrincipal = false) {
-  const resultado = capturarTodosPedidos(isPrincipal);
- 
-  if (resultado === null) {
-    const fieldId = isPrincipal ? 'pedido' : 'cif-pedido';
-    erros.mostrar(fieldId, '❌ Um ou mais pedidos inválidos (7-8 dígitos cada)');
-    return false;
-  }
- 
-  if (resultado === '') {
-    const fieldId = isPrincipal ? 'pedido' : 'cif-pedido';
-    erros.mostrar(fieldId, '❌ Pedido obrigatório');
-    return false;
-  }
- 
-  return true;
 }
  
 // ============================================
@@ -688,19 +656,17 @@ async function gerarJSONeToken() {
   const nome = utils.id('nome').value.trim();
   const cnh = utils.id('cnh').value.trim();
   const placa = utils.formatarPlaca(utils.id('placa').value);
+  const pedido = utils.id('pedido').value.trim();  // ✅ Já vem com múltiplos da tela anterior
   const eixos = utils.id('eixos').value.trim();
   const telefone = utils.limparTelefone(utils.id('telefone').value);
   const tipoVeiculo = document.querySelector('input[name="tipo_veiculo"]:checked')?.value;
- 
-  // ✅ Validar múltiplos pedidos
-  if (!validarMultiplosPedidos(true)) return;
-  const todosPedidos = capturarTodosPedidos(true);
  
   // Validações
   if (!nome || nome.length < 3) return erros.mostrar('nome', 'Informe nome completo');
   if (!validadores.cnh(cnh)) return erros.mostrar('cnh', 'CNH inválida (11 dígitos)');
   if (!validadores.telefone(telefone)) return erros.mostrar('telefone', 'Telefone inválido');
   if (!validadores.placa(placa)) return erros.mostrar('placa', 'Placa inválida');
+  if (!pedido) return erros.mostrar('pedido', 'Pedido obrigatório');  // Simples verificação
   if (!validadores.eixos(eixos)) return erros.mostrar('eixos', 'Eixos deve ser de 1 a 9');
   if (!tipoVeiculo) return erros.mostrar('form-inspecao', 'Selecione tipo de veículo');
  
@@ -722,7 +688,7 @@ async function gerarJSONeToken() {
     nome,
     cnh,
     placa,
-    pedido: todosPedidos,  // ✅ Usar múltiplos pedidos
+    pedido,  // ✅ Já tem múltiplos se digitou na tela anterior
     eixos,
     telefone,
     tipo_veiculo: tipoVeiculo,
@@ -891,20 +857,18 @@ async function salvarInspecaoCIF() {
   const cnh = utils.id('cif-cnh')?.value.trim() || '';
   const telefone = utils.limparTelefone(utils.id('cif-telefone')?.value || '');
   const placa = utils.formatarPlaca(utils.id('cif-placa')?.value || '');
+  const pedido = utils.id('cif-pedido')?.value.trim() || '';  // ✅ Já vem com múltiplos da tela anterior
   const eixos = utils.id('cif-eixos')?.value.trim() || '';
   const tipoChecklist = utils.id('cif-tipo-checklist')?.value || '';
   const segmento = utils.id('cif-segmento')?.value || '';
   const tipoVeiculoCIF = document.querySelector('input[name="cif_tipo_veiculo"]:checked')?.value;
- 
-  // ✅ Validar múltiplos pedidos CIF
-  if (!validarMultiplosPedidos(false)) return;
-  const todosPedidos = capturarTodosPedidos(false);
  
   // Validações
   if (!nome || nome.length < 3) return erros.mostrar('cif-nome', 'Informe nome completo');
   if (!validadores.cnh(cnh)) return erros.mostrar('cif-cnh', 'CNH inválida');
   if (!validadores.telefone(telefone)) return erros.mostrar('cif-telefone', 'Telefone inválido');
   if (!validadores.placa(placa)) return erros.mostrar('cif-placa', 'Placa inválida');
+  if (!pedido) return erros.mostrar('cif-pedido', 'Pedido obrigatório');  // Simples verificação
   if (!validadores.eixos(eixos)) return erros.mostrar('cif-eixos', 'Eixos inválido');
   if (!tipoChecklist) return erros.mostrar('cif-tipo-checklist', 'Selecione checklist');
   if (!segmento) return erros.mostrar('cif-segmento', 'Selecione segmento');
@@ -940,7 +904,7 @@ async function salvarInspecaoCIF() {
     nome,
     cnh,
     placa,
-    pedido: todosPedidos,  // ✅ Usar múltiplos pedidos
+    pedido,  // ✅ Já tem múltiplos se digitou na tela anterior
     eixos,
     telefone,
     tipo_checklist: tipoChecklist,
