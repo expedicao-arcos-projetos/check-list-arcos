@@ -772,7 +772,13 @@ async function gerarJSONeToken() {
   if (!validadores.telefone(telefone)) return erros.mostrar('telefone', 'Telefone inválido');
   if (!validadores.placa(placa)) return erros.mostrar('placa', 'Placa inválida');
   if (!pedido) return erros.mostrar('pedido', 'Pedido obrigatório');
-  if (!validadores.pedidoFOB(pedido)) return erros.mostrar('pedido', 'Pedido FOB deve ter exatamente 7 dígitos');
+  
+  // ✅ Validar pedidos (pode ser múltiplos com "/")
+  const resultadoValidacao = validador.validarMultiplosPedidos(pedido, 'fob');
+  if (!resultadoValidacao.valido) {
+    return erros.mostrar('pedido', resultadoValidacao.erro);
+  }
+  
   if (!validadores.eixos(eixos)) return erros.mostrar('eixos', 'Eixos deve ser de 1 a 9');
   if (!tipoVeiculo) return erros.mostrar('form-inspecao', 'Selecione tipo de veículo');
  
@@ -975,7 +981,13 @@ async function salvarInspecaoCIF() {
   if (!validadores.telefone(telefone)) return erros.mostrar('cif-telefone', 'Telefone inválido');
   if (!validadores.placa(placa)) return erros.mostrar('cif-placa', 'Placa inválida');
   if (!pedido) return erros.mostrar('cif-pedido', 'Pedido obrigatório');
-  if (!validadores.pedidoCIF(pedido)) return erros.mostrar('cif-pedido', 'Pedido CIF/Transferência deve ter exatamente 9 dígitos');
+  
+  // ✅ Validar pedidos (pode ser múltiplos com "/")
+  const resultadoValidacaoCIF = validador.validarMultiplosPedidos(pedido, 'cif');
+  if (!resultadoValidacaoCIF.valido) {
+    return erros.mostrar('cif-pedido', resultadoValidacaoCIF.erro);
+  }
+  
   if (!validadores.eixos(eixos)) return erros.mostrar('cif-eixos', 'Eixos inválido');
   if (!tipoChecklist) return erros.mostrar('cif-tipo-checklist', 'Selecione checklist');
   if (!segmento) return erros.mostrar('cif-segmento', 'Selecione segmento');
