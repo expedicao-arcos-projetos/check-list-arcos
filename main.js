@@ -43,7 +43,7 @@ const utils = {
  
   limparCPF: (cpf) => cpf.replace(/[^\d]/g, '').trim(),
   
-  formatarPlaca: (placa) => placa.replace(/[^A-Z0-9]/g, '').toUpperCase(),
+  formatarPlaca: (placa) => placa.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
   
   limparTelefone: (tel) => tel.replace(/[^\d]/g, ''),
  
