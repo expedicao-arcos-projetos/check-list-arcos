@@ -477,19 +477,81 @@ function alternarMultiplosPedidosSeleção(tipo) {
  
   if (checkbox.checked) {
     container.style.display = 'block';
+    // Adicionar primeiro campo se não tiver nenhum
+    const lista = utils.id(`lista-pedidos-${tipo}`);
+    if (lista && lista.children.length === 0) {
+      adicionarCampoPedido(tipo);
+    }
   } else {
     container.style.display = 'none';
-    const textareaId = `outros-pedidos-${tipo}`;
-    const textarea = utils.id(textareaId);
-    if (textarea) textarea.value = '';
+    // Remover todos os campos dinâmicos
+    const lista = utils.id(`lista-pedidos-${tipo}`);
+    if (lista) lista.innerHTML = '';
   }
 }
+
+// ✅ Adicionar campo de pedido dinâmico
+function adicionarCampoPedido(tipo) {
+  const lista = utils.id(`lista-pedidos-${tipo}`);
+  if (!lista) return;
  
-// ✅ Capturar todos os pedidos da tela de seleção
+  const index = lista.children.length;
+  const digitos = tipo === 'fob' ? '7' : '9';
+  const maxLength = tipo === 'fob' ? '7' : '9';
+ 
+  const fieldId = `pedido-${tipo}-${index}`;
+  const fieldHTML = `
+    <div style="display: flex; gap: 8px; align-items: flex-start;">
+      <div style="flex: 1;">
+        <input 
+          type="text" 
+          id="${fieldId}" 
+          class="pedido-input-dinamico"
+          data-tipo="${tipo}"
+          data-index="${index}"
+          placeholder="Ex: ${tipo === 'fob' ? '1234567' : '104999999'}"
+          maxlength="${maxLength}"
+          inputmode="numeric"
+          style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;"
+        >
+        <small style="display: none; color: #e74c3c; margin-top: 4px;" class="error-msg-${fieldId}">Pedido ${tipo.toUpperCase()} deve ter ${digitos} dígitos</small>
+      </div>
+      <button 
+        type="button" 
+        class="btn-remover-pedido" 
+        onclick="removerCampoPedido('${tipo}', ${index})"
+        style="padding: 10px 12px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; min-width: 45px;"
+      >
+        ✕ Remover
+      </button>
+    </div>
+  `;
+ 
+  lista.insertAdjacentHTML('beforeend', fieldHTML);
+}
+
+// ✅ Remover campo de pedido dinâmico
+function removerCampoPedido(tipo, index) {
+  const fieldId = `pedido-${tipo}-${index}`;
+  const field = utils.id(fieldId);
+  if (field) {
+    field.parentElement.parentElement.remove();
+  }
+}
+
+// ✅ Validar um pedido específico
+function validarPedidoDinamico(tipo, valor) {
+  const limpo = valor.replace(/[^\d]/g, '');
+  if (tipo === 'fob') return limpo.length === 7;
+  if (tipo === 'cif') return limpo.length === 9;
+  return false;
+}
+ 
+// ✅ Capturar todos os pedidos da tela de seleção (campos dinâmicos)
 function capturarTodosPedidosSeleção(tipo) {
   const inputId = tipo === 'fob' ? 'pedido-fob-input' : 'pedido-cif-input';
   const checkboxId = `multiplos-pedidos-${tipo}-check`;
-  const textareaId = `outros-pedidos-${tipo}`;
+  const listaId = `lista-pedidos-${tipo}`;
  
   const pedidoPrincipal = utils.id(inputId)?.value?.trim();
   if (!pedidoPrincipal) {
@@ -497,27 +559,35 @@ function capturarTodosPedidosSeleção(tipo) {
   }
  
   // Validar pedido principal
-  const pedidoPrincipalLimpo = pedidoPrincipal.replace(/[^\d]/g, '');
-  if (pedidoPrincipalLimpo.length < 7 || pedidoPrincipalLimpo.length > 8) {
+  const limpo = pedidoPrincipal.replace(/[^\d]/g, '');
+  const ehValido = tipo === 'fob' ? limpo.length === 7 : limpo.length === 9;
+  
+  if (!ehValido) {
+    const campo = tipo === 'fob' ? 'pedido-fob-input' : 'pedido-cif-input';
+    const msg = tipo === 'fob' ? 'Pedido FOB deve ter exatamente 7 dígitos' : 'Pedido CIF deve ter exatamente 9 dígitos';
+    erros.mostrar(campo, msg);
     return false; // Erro
   }
  
-  let todosPedidos = [pedidoPrincipalLimpo];
+  let todosPedidos = [limpo];
  
   // Capturar outros pedidos se checkbox marcado
   const checkbox = utils.id(checkboxId);
   if (checkbox?.checked) {
-    const outros = utils.id(textareaId)?.value?.trim();
- 
-    if (outros) {
-      const pedidosArray = outros.split('\n');
- 
-      for (let p of pedidosArray) {
-        const p_limpo = p.trim().replace(/[^\d]/g, '');
-        if (p_limpo.length < 7 || p_limpo.length > 8) {
-          return false; // Erro: pedido inválido
+    const campos = document.querySelectorAll(`#${listaId} .pedido-input-dinamico`);
+    
+    for (let campo of campos) {
+      const valor = campo.value?.trim();
+      if (valor) {
+        const valorLimpo = valor.replace(/[^\d]/g, '');
+        const ehValidoExtra = tipo === 'fob' ? valorLimpo.length === 7 : valorLimpo.length === 9;
+        
+        if (!ehValidoExtra) {
+          const msg = tipo === 'fob' ? 'Pedido FOB deve ter exatamente 7 dígitos' : 'Pedido CIF deve ter exatamente 9 dígitos';
+          erros.mostrar(campo.id, msg);
+          return false; // Erro
         }
-        todosPedidos.push(p_limpo);
+        todosPedidos.push(valorLimpo);
       }
     }
   }
@@ -1190,4 +1260,5 @@ document.addEventListener('DOMContentLoaded', () => {
   });
  
   irParaCPF();
+});
 });
