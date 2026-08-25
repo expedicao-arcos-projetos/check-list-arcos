@@ -1180,6 +1180,7 @@ function voltarPaginaAnterior() {
 function irParaCPF() {
   ocultarTodas();
   erros.limparTodos();
+  resetarCamposDinamicos(); // ✅ Limpar campos dinâmicos anteriores
   sessao.limpar();
  
   utils.id('input-cpf').value = '';
@@ -1193,6 +1194,7 @@ function irParaCPF() {
 function irParaIntegracao() {
   ocultarTodas();
   erros.limparTodos();
+  resetarCamposDinamicos(); // ✅ Limpar campos dinâmicos anteriores
   alternarBloqueioProva();
   utils.id('step-integracao').classList.remove('hidden');
 }
@@ -1200,6 +1202,7 @@ function irParaIntegracao() {
 function irParaSelecaoCarregamento() {
   ocultarTodas();
   erros.limparTodos();
+  resetarCamposDinamicos(); // ✅ Limpar campos dinâmicos anteriores
  
   document.querySelectorAll('input[name="modelo_carregamento"]').forEach(r => r.checked = false);
   utils.id('container-pedido-fob').style.display = 'none';
@@ -1210,9 +1213,31 @@ function irParaSelecaoCarregamento() {
   utils.id('step-tipo-carregamento').classList.remove('hidden');
 }
  
+// ✅ Resetar campos dinâmicos (limpar inspeção anterior)
+function resetarCamposDinamicos() {
+  // Limpar FOB
+  const checkboxFOB = utils.id('multiplos-pedidos-fob-check');
+  if (checkboxFOB) {
+    checkboxFOB.checked = false;
+    utils.id('container-outros-pedidos-fob').style.display = 'none';
+    const listaFOB = utils.id('lista-pedidos-fob');
+    if (listaFOB) listaFOB.innerHTML = '';
+  }
+ 
+  // Limpar CIF
+  const checkboxCIF = utils.id('multiplos-pedidos-cif-check');
+  if (checkboxCIF) {
+    checkboxCIF.checked = false;
+    utils.id('container-outros-pedidos-cif').style.display = 'none';
+    const listaCIF = utils.id('lista-pedidos-cif');
+    if (listaCIF) listaCIF.innerHTML = '';
+  }
+}
+ 
 function irParaInspecao(numeroPedido) {
   ocultarTodas();
   erros.limparTodos();
+  resetarCamposDinamicos(); // ✅ Limpar campos dinâmicos anteriores
   preencherUltimoCarregamento();
  
   if (numeroPedido) {
@@ -1226,6 +1251,7 @@ function irParaInspecao(numeroPedido) {
 function irParaInspecaoCIF(numeroPedido) {
   ocultarTodas();
   erros.limparTodos();
+  resetarCamposDinamicos(); // ✅ Limpar campos dinâmicos anteriores
  
   if (numeroPedido) {
     utils.id('cif-pedido').value = numeroPedido;
