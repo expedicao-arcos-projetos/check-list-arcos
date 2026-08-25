@@ -286,19 +286,22 @@
         </label>
         
         <div id="container-pedido-fob" class="input-group" style="display: none; margin-top: 5px; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #cbd5e1;">
-          <label for="pedido-fob-input" style="margin-top: 0;">Digite o número do pedido FOB (7-8 dígitos):</label>
-          <input type="text" id="pedido-fob-input" placeholder="Exemplo: 1234567" maxlength="8" inputmode="numeric">
+          <label for="pedido-fob-input" style="margin-top: 0;">Digite o número do pedido FOB (7 dígitos):</label>
+          <input type="text" id="pedido-fob-input" placeholder="Exemplo: 1234567" maxlength="7" inputmode="numeric">
           
           <!-- Checkbox para múltiplos pedidos FOB -->
           <label style="display: block; margin-top: 12px;">
             <input type="checkbox" id="multiplos-pedidos-fob-check" onchange="alternarMultiplosPedidosSeleção('fob')">
-            <span>☑️ Tenho mais de um pedido</span>
+            <span>➕ Tenho mais de um pedido</span>
           </label>
           
-          <!-- Textarea para outros pedidos FOB -->
+          <!-- Container para campos dinâmicos de outros pedidos FOB -->
           <div id="container-outros-pedidos-fob" style="display: none; margin-top: 12px;">
-            <label for="outros-pedidos-fob" style="display: block; margin-bottom: 8px;">Outros Pedidos (um por linha, 7-8 dígitos cada):</label>
-            <textarea id="outros-pedidos-fob" placeholder="Digite os outros pedidos&#10;Exemplo:&#10;2345678&#10;3456789" rows="3" style="font-family: monospace; width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc;"></textarea>
+            <label style="display: block; margin-bottom: 12px; font-weight: 500;">Outros Pedidos FOB:</label>
+            <div id="lista-pedidos-fob" style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Campos dinâmicos serão adicionados aqui -->
+            </div>
+            <button type="button" class="btn-adicionar-pedido" onclick="adicionarCampoPedido('fob')" style="margin-top: 12px;">➕ Adicionar outro pedido</button>
           </div>
         </div>
     
@@ -311,19 +314,22 @@
         </label>
     
         <div id="container-pedido-cif" class="input-group" style="display: none; margin-top: 5px; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #cbd5e1;">
-          <label for="pedido-cif-input" style="margin-top: 0;">Digite o número do pedido CIF/Transferência (7-8 dígitos):</label>
-          <input type="text" id="pedido-cif-input" placeholder="Exemplo: 1234567" maxlength="8" inputmode="numeric">
+          <label for="pedido-cif-input" style="margin-top: 0;">Digite o número do pedido CIF/Transferência (9 dígitos):</label>
+          <input type="text" id="pedido-cif-input" placeholder="Exemplo: 104999999" maxlength="9" inputmode="numeric">
           
           <!-- Checkbox para múltiplos pedidos CIF -->
           <label style="display: block; margin-top: 12px;">
             <input type="checkbox" id="multiplos-pedidos-cif-check" onchange="alternarMultiplosPedidosSeleção('cif')">
-            <span>☑️ Tenho mais de um pedido</span>
+            <span>➕ Tenho mais de um pedido</span>
           </label>
           
-          <!-- Textarea para outros pedidos CIF -->
+          <!-- Container para campos dinâmicos de outros pedidos CIF -->
           <div id="container-outros-pedidos-cif" style="display: none; margin-top: 12px;">
-            <label for="outros-pedidos-cif" style="display: block; margin-bottom: 8px;">Outros Pedidos (um por linha, 7-8 dígitos cada):</label>
-            <textarea id="outros-pedidos-cif" placeholder="Digite os outros pedidos&#10;Exemplo:&#10;2345678&#10;3456789" rows="3" style="font-family: monospace; width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc;"></textarea>
+            <label style="display: block; margin-bottom: 12px; font-weight: 500;">Outros Pedidos CIF/Transferência:</label>
+            <div id="lista-pedidos-cif" style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Campos dinâmicos serão adicionados aqui -->
+            </div>
+            <button type="button" class="btn-adicionar-pedido" onclick="adicionarCampoPedido('cif')" style="margin-top: 12px;">➕ Adicionar outro pedido</button>
           </div>
         </div>
       </div>
