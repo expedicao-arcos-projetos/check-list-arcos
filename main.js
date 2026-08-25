@@ -101,9 +101,21 @@ const validadores = {
     return limpo.length >= 10 && limpo.length <= 11;
   },
  
-  pedido: (pedido) => {
+  pedidoFOB: (pedido) => {
     const limpo = pedido.replace(/[^\d]/g, '');
-    return limpo.length >= 7 && limpo.length <= 8;
+    return limpo.length === 7; // FOB: exatamente 7 dígitos
+  },
+
+  pedidoCIF: (pedido) => {
+    const limpo = pedido.replace(/[^\d]/g, '');
+    return limpo.length === 9; // CIF/Transferência: exatamente 9 dígitos
+  },
+
+  pedido: (pedido, tipo = 'FOB') => {
+    const limpo = pedido.replace(/[^\d]/g, '');
+    if (tipo === 'FOB') return limpo.length === 7;
+    if (tipo === 'CIF') return limpo.length === 9;
+    return false;
   },
  
   eixos: (eixos) => {
@@ -666,7 +678,8 @@ async function gerarJSONeToken() {
   if (!validadores.cnh(cnh)) return erros.mostrar('cnh', 'CNH inválida (11 dígitos)');
   if (!validadores.telefone(telefone)) return erros.mostrar('telefone', 'Telefone inválido');
   if (!validadores.placa(placa)) return erros.mostrar('placa', 'Placa inválida');
-  if (!pedido) return erros.mostrar('pedido', 'Pedido obrigatório');  // Simples verificação
+  if (!pedido) return erros.mostrar('pedido', 'Pedido obrigatório');
+  if (!validadores.pedidoFOB(pedido)) return erros.mostrar('pedido', 'Pedido FOB deve ter exatamente 7 dígitos');
   if (!validadores.eixos(eixos)) return erros.mostrar('eixos', 'Eixos deve ser de 1 a 9');
   if (!tipoVeiculo) return erros.mostrar('form-inspecao', 'Selecione tipo de veículo');
  
@@ -868,7 +881,8 @@ async function salvarInspecaoCIF() {
   if (!validadores.cnh(cnh)) return erros.mostrar('cif-cnh', 'CNH inválida');
   if (!validadores.telefone(telefone)) return erros.mostrar('cif-telefone', 'Telefone inválido');
   if (!validadores.placa(placa)) return erros.mostrar('cif-placa', 'Placa inválida');
-  if (!pedido) return erros.mostrar('cif-pedido', 'Pedido obrigatório');  // Simples verificação
+  if (!pedido) return erros.mostrar('cif-pedido', 'Pedido obrigatório');
+  if (!validadores.pedidoCIF(pedido)) return erros.mostrar('cif-pedido', 'Pedido CIF/Transferência deve ter exatamente 9 dígitos');
   if (!validadores.eixos(eixos)) return erros.mostrar('cif-eixos', 'Eixos inválido');
   if (!tipoChecklist) return erros.mostrar('cif-tipo-checklist', 'Selecione checklist');
   if (!segmento) return erros.mostrar('cif-segmento', 'Selecione segmento');
