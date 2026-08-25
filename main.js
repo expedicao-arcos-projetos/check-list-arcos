@@ -514,7 +514,7 @@ function adicionarCampoPedido(tipo) {
           inputmode="numeric"
           style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;"
         >
-        <small style="display: none; color: #e74c3c; margin-top: 4px;" class="error-msg-${fieldId}">Pedido ${tipo.toUpperCase()} deve ter ${digitos} dígitos</small>
+        <small style="display: none; color: #e74c3c; margin-top: 4px;" class="error-msg-pedido">Pedido ${tipo.toUpperCase()} deve ter ${digitos} dígitos</small>
       </div>
       <button 
         type="button" 
@@ -1261,4 +1261,4 @@ document.addEventListener('DOMContentLoaded', () => {
  
   irParaCPF();
 });
-});
+ 
