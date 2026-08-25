@@ -558,20 +558,39 @@ function capturarTodosPedidosSeleção(tipo) {
     return null; // Vazio
   }
  
-  // Validar pedido principal
-  const limpo = pedidoPrincipal.replace(/[^\d]/g, '');
-  const ehValido = tipo === 'fob' ? limpo.length === 7 : limpo.length === 9;
-  
-  if (!ehValido) {
-    const campo = tipo === 'fob' ? 'pedido-fob-input' : 'pedido-cif-input';
-    const msg = tipo === 'fob' ? 'Pedido FOB deve ter exatamente 7 dígitos' : 'Pedido CIF deve ter exatamente 9 dígitos';
-    erros.mostrar(campo, msg);
-    return false; // Erro
+  let todosPedidos = [];
+ 
+  // OPÇÃO 1: Se contém "/", significa múltiplos pedidos no campo principal
+  if (pedidoPrincipal.includes('/')) {
+    const pedidosArray = pedidoPrincipal.split('/');
+    for (let p of pedidosArray) {
+      const limpo = p.trim().replace(/[^\d]/g, '');
+      if (!limpo) continue;
+      
+      const ehValido = tipo === 'fob' ? limpo.length === 7 : limpo.length === 9;
+      if (!ehValido) {
+        const campo = tipo === 'fob' ? 'pedido-fob-input' : 'pedido-cif-input';
+        const msg = tipo === 'fob' ? 'Pedido FOB deve ter exatamente 7 dígitos' : 'Pedido CIF deve ter exatamente 9 dígitos';
+        erros.mostrar(campo, msg);
+        return false;
+      }
+      todosPedidos.push(limpo);
+    }
+  } else {
+    // OPÇÃO 2: Pedido único no campo principal
+    const limpo = pedidoPrincipal.replace(/[^\d]/g, '');
+    const ehValido = tipo === 'fob' ? limpo.length === 7 : limpo.length === 9;
+    
+    if (!ehValido) {
+      const campo = tipo === 'fob' ? 'pedido-fob-input' : 'pedido-cif-input';
+      const msg = tipo === 'fob' ? 'Pedido FOB deve ter exatamente 7 dígitos' : 'Pedido CIF deve ter exatamente 9 dígitos';
+      erros.mostrar(campo, msg);
+      return false;
+    }
+    todosPedidos.push(limpo);
   }
  
-  let todosPedidos = [limpo];
- 
-  // Capturar outros pedidos se checkbox marcado
+  // OPÇÃO 3: Capturar outros pedidos dos campos dinâmicos (se checkbox marcado)
   const checkbox = utils.id(checkboxId);
   if (checkbox?.checked) {
     const campos = document.querySelectorAll(`#${listaId} .pedido-input-dinamico`);
@@ -585,14 +604,15 @@ function capturarTodosPedidosSeleção(tipo) {
         if (!ehValidoExtra) {
           const msg = tipo === 'fob' ? 'Pedido FOB deve ter exatamente 7 dígitos' : 'Pedido CIF deve ter exatamente 9 dígitos';
           erros.mostrar(campo.id, msg);
-          return false; // Erro
+          return false;
         }
         todosPedidos.push(valorLimpo);
       }
     }
   }
  
-  return todosPedidos.join('/');
+  // Retornar todos os pedidos separados por "/"
+  return todosPedidos.length > 0 ? todosPedidos.join('/') : null;
 }
  
 function alternarCamposPedido() {
@@ -631,7 +651,10 @@ async function confirmarTipoCarregamento() {
  
   if (todosPedidos === false) {
     const fieldId = opcao === 'FOB' ? 'pedido-fob-input' : 'pedido-cif-input';
-    erros.mostrar(fieldId, '❌ Um ou mais pedidos inválidos (7-8 dígitos cada)');
+    const msg = opcao === 'FOB' 
+      ? '❌ Um ou mais pedidos inválidos (7 dígitos cada)' 
+      : '❌ Um ou mais pedidos inválidos (9 dígitos cada)';
+    erros.mostrar(fieldId, msg);
     return;
   }
  
@@ -1261,4 +1284,3 @@ document.addEventListener('DOMContentLoaded', () => {
  
   irParaCPF();
 });
- 
