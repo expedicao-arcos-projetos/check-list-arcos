@@ -43,7 +43,7 @@ const utils = {
  
   limparCPF: (cpf) => cpf.replace(/[^\d]/g, '').trim(),
   
-  formatarPlaca: (placa) => placa.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+  formatarPlaca: (placa) => placa.replace(/[^A-Za-z0-9]/g, '').toUpperCase(),
   
   limparTelefone: (tel) => tel.replace(/[^\d]/g, ''),
  
@@ -92,7 +92,7 @@ const validadores = {
  
   placa: (placa) => {
     const clean = utils.formatarPlaca(placa);
-    const regexPlaca = /^[A-Z]{3}[0-9]{1}[A-Z0-9]{1}[0-9]{2}$/;
+    const regexPlaca = /^[A-Z]{3}[0-9]{4}$|^[A-Z]{3}[0-9][A-Z][0-9]{2}$/; // Antiga ou Mercosul
     return regexPlaca.test(clean);
   },
  
