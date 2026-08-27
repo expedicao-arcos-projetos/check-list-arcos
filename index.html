@@ -59,7 +59,7 @@
         </div>
  
         <div class="input-group">
-          <label for="reg-telefone">Telefone de Contato 'WHATSAPP' (com DDD sem o "0"):</label>
+          <label for="reg-telefone">Telefone de Contato 'WHATSAPP' (com DDD):</label>
           <input type="text" id="reg-telefone" placeholder="EX: 11999999999" maxlength="11" inputmode="numeric" required>
         </div>
  
@@ -301,7 +301,7 @@
             <div id="lista-pedidos-fob" style="display: flex; flex-direction: column; gap: 10px;">
               <!-- Campos dinâmicos serão adicionados aqui -->
             </div>
-            <button type="button" class="btn-adicionar-pedido" onclick="adicionarCampoPedido('fob')" style="margin-top: 12px;">➕ Adicionar outro pedido</button>
+            <button type="button" class="btn-adicionar-pedido" onclick="adicionarCampoPedido('fob')" style="margin-top: 10px; align-self: flex-start;">➕ Adicionar</button>
           </div>
         </div>
     
@@ -309,7 +309,7 @@
           <input type="radio" name="modelo_carregamento" value="CIF" onchange="alternarCamposPedido()">
           <div class="conteudo-carregamento">
             <h3>🚚 TRANSFERÊNCIA / CIF</h3>
-            <p class="subtexto-transportadoras">Transportadoras: <strong>Targets / Tora / TransAgil / Frota CSN / Outra</strong></p>
+            <p class="subtexto-transportadoras">Transportadoras: <strong>Targets / Tora / TransAgil</strong></p>
           </div>
         </label>
     
@@ -329,7 +329,7 @@
             <div id="lista-pedidos-cif" style="display: flex; flex-direction: column; gap: 10px;">
               <!-- Campos dinâmicos serão adicionados aqui -->
             </div>
-            <button type="button" class="btn-adicionar-pedido" onclick="adicionarCampoPedido('cif')" style="margin-top: 12px;">➕ Adicionar outro pedido</button>
+            <button type="button" class="btn-adicionar-pedido" onclick="adicionarCampoPedido('cif')" style="margin-top: 10px; align-self: flex-start;">➕ Adicionar</button>
           </div>
         </div>
       </div>
@@ -550,7 +550,7 @@
               </label>
               <div id="quantidade-paletes-container" class="input-group" style="display: none; margin-left: 20px; margin-bottom: 10px;">
                 <label for="quantidade-paletes">Quantidade:</label>
-                <input type="number" id="quantidade-paletes" inputmode="numeric" placeholder="0" min="0" max="999">
+                <input type="number" id="quantidade-paletes" placeholder="0" min="0" max="999">
               </div>
             </div>
         
@@ -597,8 +597,8 @@
         </div>
  
         <div class="input-group">
-          <label for="cif-pedido">Nº do Pedido (Principal - 9 dígitos):</label>
-          <input type="text" id="cif-pedido" placeholder="EX: 123456789" maxlength="9" inputmode="numeric" required>
+          <label for="cif-pedido">Nº do Pedido (Principal - 7-8 dígitos):</label>
+          <input type="text" id="cif-pedido" placeholder="EX: 1234567" maxlength="8" inputmode="numeric" required>
         </div>
  
         <div class="input-group">
