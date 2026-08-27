@@ -242,17 +242,17 @@ select:disabled {
 }
 
 .btn-adicionar-pedido {
-  width: 100%;
-  padding: 12px;
+  width: auto;
+  padding: 8px 16px;
   background: #27ae60;
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .btn-adicionar-pedido:hover {
