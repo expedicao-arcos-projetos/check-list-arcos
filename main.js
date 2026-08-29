@@ -680,14 +680,17 @@ async function confirmarTipoCarregamento() {
   console.log('📡 Resposta completa da API:', resultado);
   console.log('📦 resultado.sucesso:', resultado.sucesso);
   console.log('📦 resultado.dados:', resultado.dados);
-  console.log('📦 resultado.dados.ultima_inspecao:', resultado.dados?.ultima_inspecao);
+  console.log('📦 resultado.dados.dados:', resultado.dados?.dados);
+  console.log('📦 resultado.dados.dados.ultima_inspecao:', resultado.dados?.dados?.ultima_inspecao);
   
   if (resultado.sucesso) {
-    if (resultado.dados.ultima_inspecao) {
-      estadoGlobal.ultimaInspecao = resultado.dados.ultima_inspecao;
+    // ✅ CORRIGIDO: Acessar em 3 níveis (aninhamento duplo)
+    if (resultado.dados.dados && resultado.dados.dados.ultima_inspecao) {
+      estadoGlobal.ultimaInspecao = resultado.dados.dados.ultima_inspecao;
       console.log('✅ Última inspeção carregada:', estadoGlobal.ultimaInspecao);
     } else {
       console.log('⚠️ Nenhuma inspeção anterior encontrada para este CPF');
+      console.log('📊 resultado.dados.dados:', resultado.dados?.dados);
       estadoGlobal.ultimaInspecao = null;
     }
   } else {
@@ -1342,3 +1345,4 @@ document.addEventListener('DOMContentLoaded', () => {
  
   irParaCPF();
 });
+ 
