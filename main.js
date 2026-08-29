@@ -677,6 +677,11 @@ async function confirmarTipoCarregamento() {
  
   loading.hide();
  
+  console.log('📡 Resposta completa da API:', resultado);
+  console.log('📦 resultado.sucesso:', resultado.sucesso);
+  console.log('📦 resultado.dados:', resultado.dados);
+  console.log('📦 resultado.dados.ultima_inspecao:', resultado.dados?.ultima_inspecao);
+  
   if (resultado.sucesso) {
     if (resultado.dados.ultima_inspecao) {
       estadoGlobal.ultimaInspecao = resultado.dados.ultima_inspecao;
