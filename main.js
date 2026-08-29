@@ -38,7 +38,6 @@ const utils = {
   id: (el) => document.getElementById(el),
   
   debug: (msg, dados = null) => {
-    if (DEBUG) console.log(`[DEBUG] ${msg}`, dados || '');
   },
  
   limparCPF: (cpf) => cpf.replace(/[^\d]/g, '').trim(),
@@ -667,8 +666,6 @@ async function confirmarTipoCarregamento() {
   const cpfRaw = sessao.obterCPF();
   const cpfLimpo = cpfRaw.replace(/[^\d]/g, '');
   
-  console.log('🔍 CPF enviado:', cpfLimpo);
-  console.log('📊 Tipo:', opcao);
   
   const resultado = await api.chamar('/api/ultima-inspecao-por-tipo', 'POST', {
     cpf: cpfLimpo,
@@ -677,24 +674,15 @@ async function confirmarTipoCarregamento() {
  
   loading.hide();
  
-  console.log('📡 Resposta completa da API:', resultado);
-  console.log('📦 resultado.sucesso:', resultado.sucesso);
-  console.log('📦 resultado.dados:', resultado.dados);
-  console.log('📦 resultado.dados.dados:', resultado.dados?.dados);
-  console.log('📦 resultado.dados.dados.ultima_inspecao:', resultado.dados?.dados?.ultima_inspecao);
   
   if (resultado.sucesso) {
     // ✅ CORRIGIDO: Acessar em 3 níveis (aninhamento duplo)
     if (resultado.dados.dados && resultado.dados.dados.ultima_inspecao) {
       estadoGlobal.ultimaInspecao = resultado.dados.dados.ultima_inspecao;
-      console.log('✅ Última inspeção carregada:', estadoGlobal.ultimaInspecao);
     } else {
-      console.log('⚠️ Nenhuma inspeção anterior encontrada para este CPF');
-      console.log('📊 resultado.dados.dados:', resultado.dados?.dados);
       estadoGlobal.ultimaInspecao = null;
     }
   } else {
-    console.error('❌ Erro ao carregar última inspeção:', resultado.erro);
     erros.mostrar('step-tipo-carregamento', resultado.erro);
     return;
   }
@@ -1345,4 +1333,3 @@ document.addEventListener('DOMContentLoaded', () => {
  
   irParaCPF();
 });
- 
