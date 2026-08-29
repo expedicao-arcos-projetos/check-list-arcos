@@ -662,10 +662,16 @@ async function confirmarTipoCarregamento() {
   estadoGlobal.numeroPedido = todosPedidos;  // ✅ Múltiplos pedidos
  
   loading.show();
-  const cpf = sessao.obterCPF();
+  
+  // ✅ CORRIGIDO: Limpar CPF (remover formatação)
+  const cpfRaw = sessao.obterCPF();
+  const cpfLimpo = cpfRaw.replace(/[^\d]/g, '');
+  
+  console.log('🔍 CPF enviado:', cpfLimpo);
+  console.log('📊 Tipo:', opcao);
   
   const resultado = await api.chamar('/api/ultima-inspecao-por-tipo', 'POST', {
-    cpf,
+    cpf: cpfLimpo,
     tipo: opcao
   });
  
@@ -676,11 +682,10 @@ async function confirmarTipoCarregamento() {
       estadoGlobal.ultimaInspecao = resultado.dados.ultima_inspecao;
       console.log('✅ Última inspeção carregada:', estadoGlobal.ultimaInspecao);
     } else {
-      console.log('⚠️ Nenhuma inspeção anterior encontrada');
+      console.log('⚠️ Nenhuma inspeção anterior encontrada para este CPF');
       estadoGlobal.ultimaInspecao = null;
     }
   } else {
-    // ✅ MOSTRAR ERRO
     console.error('❌ Erro ao carregar última inspeção:', resultado.erro);
     erros.mostrar('step-tipo-carregamento', resultado.erro);
     return;
