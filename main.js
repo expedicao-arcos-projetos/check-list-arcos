@@ -672,8 +672,18 @@ async function confirmarTipoCarregamento() {
   loading.hide();
  
   if (resultado.sucesso) {
-    estadoGlobal.ultimaInspecao = resultado.dados.ultima_inspecao;
-    utils.debug(`Última inspeção ${opcao} carregada`);
+    if (resultado.dados.ultima_inspecao) {
+      estadoGlobal.ultimaInspecao = resultado.dados.ultima_inspecao;
+      console.log('✅ Última inspeção carregada:', estadoGlobal.ultimaInspecao);
+    } else {
+      console.log('⚠️ Nenhuma inspeção anterior encontrada');
+      estadoGlobal.ultimaInspecao = null;
+    }
+  } else {
+    // ✅ MOSTRAR ERRO
+    console.error('❌ Erro ao carregar última inspeção:', resultado.erro);
+    erros.mostrar('step-tipo-carregamento', resultado.erro);
+    return;
   }
  
   if (opcao === 'FOB') {
