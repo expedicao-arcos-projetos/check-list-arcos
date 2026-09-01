@@ -335,18 +335,15 @@ async function verificarAcesso() {
  
     if (jaFezProva) {
       // ✅ JÁ FEZ PROVA → Ir direto para seleção de carregamento
-      console.log('✅ Motorista já fez prova, pulando integração');
       irParaSelecaoCarregamento();
     } else {
       // ❌ NÃO FEZ PROVA → Ir para prova novamente
-      console.log('⚠️ Motorista já existe MAS precisa fazer prova');
       estadoGlobal.primeiraVez = true;
       irParaIntegracao();
     }
   } else {
     // ✅ MOTORISTA NÃO EXISTE → Ir para integração (primeira vez)
     estadoGlobal.primeiraVez = true;
-    console.log('🆕 Novo motorista, ir para integração');
     irParaIntegracao();
   }
  
