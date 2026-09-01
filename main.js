@@ -283,18 +283,23 @@ const sessao = {
 async function verificarAcesso() {
   erros.limparTodos();
   const inputCPF = utils.id('input-cpf');
-  const cpf = utils.limparCPF(inputCPF.value);
+  const cpf = inputCPF.value.trim();
+ 
+  if (!cpf) {
+    erros.mostrar('input-cpf', 'Informe seu CPF');
+    return;
+  }
  
   if (!validadores.cpf(cpf)) {
-    erros.mostrar('input-cpf', 'CPF inválido! Verifique os 11 dígitos.');
+    erros.mostrar('input-cpf', 'CPF inválido');
     return;
   }
  
   loading.show();
-  sessao.armazenarCPF(cpf);
   estadoGlobal.cpfAtual = cpf;
+  sessao.armazenarCPF(cpf);
  
-  const resultado = await api.chamar('/api/verificar-cpf', 'POST', { cpf });
+  const resultado = await api.chamar('/api/verificar-cpf', 'GET', null, cpf);
   loading.hide();
  
   if (!resultado.sucesso) {
@@ -305,8 +310,9 @@ async function verificarAcesso() {
   const { existe, dados, ultima_inspecao } = resultado.dados;
  
   if (existe) {
+    // ✅ MOTORISTA JÁ EXISTE
     estadoGlobal.motorista = {
-      cpf: cpf,  // ✅ Adicionar CPF
+      cpf: cpf,
       ...dados
     };
     estadoGlobal.ultimaInspecao = ultima_inspecao;
@@ -320,9 +326,27 @@ async function verificarAcesso() {
       eixos: ''
     };
  
-    irParaSelecaoCarregamento();
+    // ✅ VERIFICAR SE JÁ FEZ PROVA
+    // Se prova_respondida existe e não é vazio = já fez
+    const jaFezProva = dados?.prova_respondida && 
+                       dados.prova_respondida.trim() !== '' &&
+                       dados.prova_respondida !== 'null' &&
+                       dados.prova_respondida !== '{}';
+ 
+    if (jaFezProva) {
+      // ✅ JÁ FEZ PROVA → Ir direto para seleção de carregamento
+      console.log('✅ Motorista já fez prova, pulando integração');
+      irParaSelecaoCarregamento();
+    } else {
+      // ❌ NÃO FEZ PROVA → Ir para prova novamente
+      console.log('⚠️ Motorista já existe MAS precisa fazer prova');
+      estadoGlobal.primeiraVez = true;
+      irParaIntegracao();
+    }
   } else {
+    // ✅ MOTORISTA NÃO EXISTE → Ir para integração (primeira vez)
     estadoGlobal.primeiraVez = true;
+    console.log('🆕 Novo motorista, ir para integração');
     irParaIntegracao();
   }
  
