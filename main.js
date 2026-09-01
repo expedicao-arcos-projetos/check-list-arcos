@@ -299,7 +299,7 @@ async function verificarAcesso() {
   estadoGlobal.cpfAtual = cpf;
   sessao.armazenarCPF(cpf);
  
-  const resultado = await api.chamar('/api/verificar-cpf', 'GET', null, cpf);
+  const resultado = await api.chamar(`/api/verificar-cpf?cpf=${cpf}`, 'GET');
   loading.hide();
  
   if (!resultado.sucesso) {
